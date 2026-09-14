@@ -1,0 +1,110 @@
+# ================================
+# Unity generated folders
+# ================================
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Builds
+[Bb]uild/
+[Bb]uilds/
+
+# Unity generated captures
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+
+# ================================
+# IDE / Editors
+# ================================
+
+# Visual Studio
+.vs/
+
+# JetBrains Rider
+.idea/
+
+# VS Code
+.vscode/
+
+
+# ================================
+# Generated project files
+# ================================
+
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+
+*.pdb
+*.mdb
+
+*.opendb
+*.VC.db
+
+
+# ================================
+# Operating system files
+# ================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+
+# ================================
+# Temporary / backup files
+# ================================
+
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.swp
+
+
+# ================================
+# Unity crash/debug information
+# ================================
+
+sysinfo.txt
+
+
+# ================================
+# Unity exported packages
+# ================================
+
+*.unitypackage
+
+
+# ================================
+# Mobile builds
+# ================================
+
+*.apk
+*.aab
+
+
+# ================================
+# Crashlytics
+# ================================
+
+crashlytics-build.properties
