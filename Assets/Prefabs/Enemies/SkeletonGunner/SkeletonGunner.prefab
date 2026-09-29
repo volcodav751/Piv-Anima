@@ -389,7 +389,7 @@ MonoBehaviour:
   muzzle: {fileID: 1134544196655335290}
   hitMask:
     serializedVersion: 2
-    m_Bits: 576
+    m_Bits: 0
 --- !u!114 &1919189078050570153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -411,7 +411,7 @@ MonoBehaviour:
   playerTag: Player
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 512
+    m_Bits: 0
   deathVfxPrefab: {fileID: 0}
   drawGizmos: 1
 --- !u!114 &3421989695094456722
