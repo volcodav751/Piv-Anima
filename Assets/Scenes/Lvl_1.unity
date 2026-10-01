@@ -26010,6 +26010,7 @@ GameObject:
   - component: {fileID: 680348584}
   - component: {fileID: 680348587}
   - component: {fileID: 680348588}
+  - component: {fileID: 680348589}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -26054,7 +26055,7 @@ Camera:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1
+    width: 0.99901676
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -26159,6 +26160,24 @@ MonoBehaviour:
   m_CropFrameX: 0
   m_CropFrameY: 0
   m_StretchFill: 0
+--- !u!114 &680348589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680348583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b452fdf574d807b4bb8a5f703764abba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomCameraController
+  leftCameraX: 3.6
+  rightCameraX: 5.5
+  moveSpeed: 5
+  isAreaCleared: 0
+  player: {fileID: 525512883}
+  triggerRightX: 4.8
 --- !u!1 &681428264
 GameObject:
   m_ObjectHideFlags: 0
