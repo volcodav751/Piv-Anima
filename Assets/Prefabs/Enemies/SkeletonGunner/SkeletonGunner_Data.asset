@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a2ea75c6c0f7764d8dbb38fbda2ecdc, type: 3}
+  m_Name: SkeletonGunner_Data
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.RangedEnemyData
+  maxHealth: 5
+  moveSpeed: 2.5
+  acceleration: 25
+  knockback: 3
+  detectionRadius: 8
+  activationDelay: 0.6
+  patrol: 1
+  patrolRadius: 1.5
+  patrolSpeedMultiplier: 0.5
+  patrolWaitRange: {x: 1, y: 2.5}
+  deathDuration: 0.4
+  retreatDistance: 2.5
+  preferredDistance: 4.5
+  attackRange: 6.5
+  retreatSpeedMultiplier: 0.7
+  turnSpeed: 540
+  aimToleranceDeg: 12
+  bulletsPerBurst: 4
+  timeBetweenShots: 0.1
+  burstCooldown: 1.4
+  firstBurstDelay: 0.35
+  spreadDeg: 8
+  projectilePrefab: {fileID: 6252802467758165061, guid: f70393ae8977ebc4a8962b1ef77c4be1, type: 3}
+  projectileSpeed: 8
+  projectileDamage: 1
+  projectileLifetime: 2.5
