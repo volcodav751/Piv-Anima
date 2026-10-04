@@ -8,7 +8,7 @@ namespace Game.Combat
     /// Knows nothing about who owns it: listeners subscribe to Damaged / Died.
     /// </summary>
     [DisallowMultipleComponent]
-    public class Health : MonoBehaviour, IDamageable
+    public class Health : MonoBehaviour, IDamageable, IHealth
     {
         [SerializeField, Min(1)] private int maxHealth = 5;
 
