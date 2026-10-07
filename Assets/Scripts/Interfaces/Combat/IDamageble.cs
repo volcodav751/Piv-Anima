@@ -11,4 +11,5 @@ namespace Game.Combat
         bool IsAlive { get; }
         void TakeDamage(DamageInfo damage);
     }
+    
 }
