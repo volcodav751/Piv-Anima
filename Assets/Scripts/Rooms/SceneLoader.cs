@@ -1,23 +1,28 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 public class SceneLoader : MonoBehaviour
 {
     [Tooltip("Name of the scene to load")]
-    public string targetSceneName;
+    [SerializeField]
+    private string targetSceneName;
+
+    [SerializeField]
+    private LayerMask playerLayer;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if ((playerLayer.value & (1 << collision.gameObject.layer)) == 0)
         {
-            if (!string.IsNullOrEmpty(targetSceneName))
-            {
-                SceneManager.LoadScene(targetSceneName);
-            }
-            else
-            {
-                Debug.LogWarning("Target scene name not specified in the Inspector!");
-            }
+            return;
         }
+
+        if (string.IsNullOrEmpty(targetSceneName))
+        {
+            Debug.LogWarning("Target scene name not specified in the Inspector!");
+            return;
+        }
+
+        SceneManager.LoadScene(targetSceneName);
     }
 }
