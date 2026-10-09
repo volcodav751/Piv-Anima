@@ -9,4 +9,9 @@ public class Bullet : MonoBehaviour
     {
         Destroy(gameObject, lifetime);
     }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        Destroy(gameObject);
+    }
 }
