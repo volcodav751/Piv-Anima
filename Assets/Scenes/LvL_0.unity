@@ -1634,7 +1634,7 @@ GameObject:
   - component: {fileID: 62382121}
   - component: {fileID: 62382122}
   - component: {fileID: 62382123}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: pool_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21542,33 +21542,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1146518619}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1012564199 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3682359386692017594, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
-  m_PrefabInstance: {fileID: 602356616446355233}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &1012564202
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1012564199}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 4c805f3900652aa4fb9c3de5dea00cda, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &1015551331
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29276,9 +29249,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
+    y: 0.1398773
     width: 1
-    height: 1
+    height: 0.72055215
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -44307,29 +44280,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 617301076363042550, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
-      propertyPath: m_SortingOrder
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 2429993727360774676, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4834269178454283289, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6843323956941335494, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3682359386692017594, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1012564202}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
 --- !u!4 &602356616446355234 stripped
 Transform:

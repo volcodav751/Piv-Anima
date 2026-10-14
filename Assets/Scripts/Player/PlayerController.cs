@@ -7,11 +7,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField, Min(0f)]
     private float moveSpeed = 5f;
 
+    private float moveSpeedMultiplier = 1f;
+
     [SerializeField]
     private InputActionReference moveAction;
 
     private Rigidbody2D rigidBody;
     private Vector2 moveInput;
+
+    private bool movementEnabled = true;
 
     private void Awake()
     {
@@ -49,6 +53,32 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        rigidBody.linearVelocity = moveInput * moveSpeed;
+        if (!movementEnabled)
+        {
+            return;
+        }
+
+        rigidBody.linearVelocity =
+            moveInput * moveSpeed * moveSpeedMultiplier;
+    }
+
+    public Vector2 GetMoveInput()
+    {
+        return moveInput;
+    }
+
+    public void SetMovementEnabled(bool enabled)
+    {
+        movementEnabled = enabled;
+
+        if (!movementEnabled)
+        {
+            rigidBody.linearVelocity = Vector2.zero;
+        }
+    }
+
+    public void SetMoveSpeedMultiplier(float multiplier)
+    {
+        moveSpeedMultiplier = Mathf.Max(0f, multiplier);
     }
 }
