@@ -24,6 +24,8 @@ public class PlayerWeapon : MonoBehaviour
     [SerializeField, Min(0f)]
     private float aimSpeed = 360f;
 
+    private float aimSpeedMultiplier = 1f;
+
     [SerializeField, Min(0f)]
     private float shootCooldown = 0.25f;
 
@@ -35,10 +37,14 @@ public class PlayerWeapon : MonoBehaviour
 
     private Camera mainCamera;
     private float nextShotTime;
+    private Collider2D playerCollider;
+
+    private bool shootingEnabled = true;
 
     private void Awake()
     {
         mainCamera = Camera.main;
+        playerCollider = GetComponent<Collider2D>();
     }
 
     private void OnEnable()
@@ -79,12 +85,17 @@ public class PlayerWeapon : MonoBehaviour
         playerVisual.rotation = Quaternion.RotateTowards(
             playerVisual.rotation,
             targetRotation,
-            aimSpeed * Time.deltaTime
+            aimSpeed * aimSpeedMultiplier * Time.deltaTime
         );
     }
 
     private void HandleShooting()
     {
+        if (!shootingEnabled)
+        {
+            return;
+        }
+
         if (!shootAction.action.IsPressed())
         {
             return;
@@ -111,9 +122,30 @@ public class PlayerWeapon : MonoBehaviour
         Rigidbody2D bulletRigidBody =
             bullet.GetComponent<Rigidbody2D>();
 
+        Collider2D bulletCollider =
+            bullet.GetComponent<Collider2D>();
+
+        if (bulletCollider != null && playerCollider != null)
+        {
+            Physics2D.IgnoreCollision(
+                bulletCollider,
+                playerCollider
+            );
+        }
+
         bulletRigidBody.linearVelocity =
             firePoint.right * bulletSpeed;
 
         Destroy(bullet, bulletLifetime);
+    }
+
+    public void SetAimSpeedMultiplier(float multiplier)
+    {
+        aimSpeedMultiplier = Mathf.Max(0f, multiplier);
+    }
+
+    public void SetShootingEnabled(bool enabled)
+    {
+        shootingEnabled = enabled;
     }
 }
