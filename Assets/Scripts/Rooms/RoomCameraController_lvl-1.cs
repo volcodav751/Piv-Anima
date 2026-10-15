@@ -2,17 +2,12 @@ using UnityEngine;
 
 public class RoomCameraController : MonoBehaviour
 {
-    public float leftCameraX = 3.6f;
-
-    public float rightCameraX = 5.5f;
-
-    public float moveSpeed = 5f;
-
-    public bool isAreaCleared = false;
-
     public Transform player;
-
-    public float triggerRightX = 5f;
+    public float moveSpeed = 5f;
+    public bool isAreaCleared = false;
+    public float lockedCameraX = 3.6f;
+    public float minX = 3.6f;
+    public float maxX = 5.5f; 
 
     private void Update()
     {
@@ -22,22 +17,24 @@ public class RoomCameraController : MonoBehaviour
             Debug.Log("Zone clearance status: " + isAreaCleared);
         }
 
-        float targetX = leftCameraX;
+        float targetX;
 
-        if (isAreaCleared)
+        if (!isAreaCleared)
         {
-            if (player != null && player.position.x > triggerRightX)
-            {
-                targetX = rightCameraX; 
-            }
-            else
-            {
-                targetX = leftCameraX;  
-            }
+            targetX = lockedCameraX;
         }
         else
         {
-            targetX = leftCameraX;
+            if (player != null)
+            {
+                targetX = player.position.x;
+            }
+            else
+            {
+                targetX = transform.position.x;
+            }
+
+            targetX = Mathf.Clamp(targetX, minX, maxX);
         }
 
         Vector3 targetPosition = new Vector3(targetX, transform.position.y, transform.position.z);
