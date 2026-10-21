@@ -1,437 +1,759 @@
-using System;
 using System.Collections;
 using Game.Combat;
 using UnityEngine;
 
 namespace Game.Enemies
 {
-    /// <summary>
-    /// Ranged skeleton with an assault rifle.
-    /// Spawning -> Idle (patrol) -> Chase (keep distance) -> Attack (bursts) -> Dead.
-    /// Top-down 2D: Rigidbody2D with gravity 0.
-    /// </summary>
-    [RequireComponent(typeof(Rigidbody2D), typeof(Health))]
+    [RequireComponent(
+        typeof(Rigidbody2D),
+        typeof(Health),
+        typeof(EnemyPathfinder2D))]
     [DisallowMultipleComponent]
     public class SkeletonGunnerAI : MonoBehaviour
     {
-        public enum State { Spawning, Idle, Chase, Attack, Dead }
+        public enum State
+        {
+            Idle,
+            Chase,
+            Attack,
+            Dead
+        }
 
         [Header("Config")]
-        [SerializeField] private RangedEnemyData data;
+        [SerializeField]
+        private RangedEnemyData data;
 
         [Header("References")]
-        [SerializeField] private EnemyWeapon weapon;
-        [Tooltip("Rotated toward the aim direction. Gun and muzzle are its children, pointing along +X.")]
-        [SerializeField] private Transform aimPivot;
-        [Tooltip("Optional. flipX follows aim direction (for the real sprite later).")]
-        [SerializeField] private SpriteRenderer bodyRenderer;
-        [Tooltip("Optional. flipY when aiming left, so the gun sprite isn't upside down.")]
-        [SerializeField] private SpriteRenderer gunRenderer;
+        [SerializeField]
+        private EnemyWeapon weapon;
 
-        [Header("Targeting")]
-        [Tooltip("Leave empty — found by tag at runtime.")]
-        [SerializeField] private Transform target;
-        [SerializeField] private string playerTag = "Player";
-        [Tooltip("Layers that block line of sight (walls, rocks). Empty = enemy sees through everything.")]
-        [SerializeField] private LayerMask obstacleMask;
+        [SerializeField]
+        private Transform aimPivot;
 
-        [Header("Death")]
-        [Tooltip("Optional particle/animation prefab spawned on death.")]
-        [SerializeField] private GameObject deathVfxPrefab;
+        [SerializeField]
+        private SpriteRenderer bodyRenderer;
 
-        [Header("Debug")]
-        [SerializeField] private bool drawGizmos = true;
+        [SerializeField]
+        private SpriteRenderer gunRenderer;
 
-        public State CurrentState => _state;
-        public RangedEnemyData Data => data;
+        [Header("Target")]
+        [SerializeField]
+        private Transform target;
 
-        /// <summary>Fired once on death (before the death effect finishes).</summary>
-        public event Action<SkeletonGunnerAI> Died;
+        [SerializeField]
+        private string playerTag = "Player";
 
-        private const float LostSightGrace = 0.4f;       // how long LOS may be broken before leaving Attack
         private const float TargetSearchInterval = 0.5f;
-        private const float StuckSpeed = 0.15f;
-        private const float StuckRetreatTime = 0.4f;     // cornered this long while retreating -> just shoot
-        private const float RetreatLockout = 1.5f;
-        private const float PatrolArriveDistance = 0.1f;
-        private const float PatrolMaxLegTime = 3f;
 
-        private Rigidbody2D _rb;
-        private Health _health;
-        private Collider2D[] _colliders;
-        private IDamageable _targetHealth;
+        private const float AimTurnSpeed = 540f;
+        private const float AimTolerance = 12f;
 
-        private State _state = State.Spawning;
-        private Vector2 _desiredVelocity;
-        private float _aimAngle;
+        private const float RetreatDistanceFactor = 0.6f;
+        private const float LoseTargetDistanceFactor = 1.25f;
 
-        private float _activateAt;
-        private float _nextTargetSearch;
-        private float _lostSightTimer;
-        private float _attackReadyAt;
-        private float _retreatStuckTimer;
-        private float _ignoreRetreatUntil;
+        private const float PatrolSpeedFactor = 0.5f;
+        private const float PatrolStopDistance = 0.1f;
+        private const float PatrolWaitMin = 1f;
+        private const float PatrolWaitMax = 2.5f;
 
-        private Vector2 _home;
-        private Vector2 _patrolPoint;
-        private bool _patrolWaiting;
-        private float _patrolWaitUntil;
-        private float _patrolLegStartedAt;
+        private const float DeathDuration = 0.4f;
+        private const float DeathSpinSpeed = 720f;
 
-        // ───────────────────────── Lifecycle ─────────────────────────
+        private Rigidbody2D rigidBody;
+        private Health health;
+        private EnemyPathfinder2D pathfinder;
 
-        private void Reset()
-        {
-            weapon = GetComponentInChildren<EnemyWeapon>();
-        }
+        private Collider2D[] colliders;
+        private IDamageable targetHealth;
+
+        private State currentState =
+            State.Idle;
+
+        private Vector2 desiredVelocity;
+        private Vector2 homePosition;
+        private Vector2 patrolPoint;
+
+        private float aimAngle;
+        private float nextTargetSearchTime;
+        private float patrolWaitUntil;
+
+        private bool waitingAtPatrolPoint;
+
+        private int waterLayer;
+        private int enemyLayer;
 
         private void Awake()
         {
-            _rb = GetComponent<Rigidbody2D>();
-            _health = GetComponent<Health>();
-            _colliders = GetComponentsInChildren<Collider2D>();
-            if (weapon == null) weapon = GetComponentInChildren<EnemyWeapon>();
+            rigidBody =
+                GetComponent<Rigidbody2D>();
 
-            _rb.gravityScale = 0f;
-            _rb.freezeRotation = true;
+            health =
+                GetComponent<Health>();
+
+            pathfinder =
+                GetComponent<EnemyPathfinder2D>();
+
+            colliders =
+                GetComponentsInChildren<Collider2D>();
+
+            if (weapon == null)
+            {
+                weapon =
+                    GetComponentInChildren<EnemyWeapon>();
+            }
+
+            rigidBody.gravityScale = 0f;
+            rigidBody.freezeRotation = true;
+
+            waterLayer =
+                LayerMask.NameToLayer("Water");
+
+            enemyLayer =
+                LayerMask.NameToLayer("Enemy");
 
             if (data == null)
             {
-                Debug.LogError($"{name}: RangedEnemyData is not assigned — AI disabled.", this);
                 enabled = false;
                 return;
             }
 
-            _health.SetMaxHealth(data.maxHealth);
-            if (weapon != null) weapon.Init(data, gameObject);
-            _aimAngle = aimPivot != null ? aimPivot.eulerAngles.z : 0f;
+            health.SetMaxHealth(
+                data.maxHealth
+            );
+
+            if (weapon != null)
+            {
+                weapon.Init(
+                    data,
+                    gameObject
+                );
+            }
+
+            if (aimPivot != null)
+            {
+                aimAngle =
+                    aimPivot.eulerAngles.z;
+            }
         }
 
         private void OnEnable()
         {
-            _health.Damaged += OnDamaged;
-            _health.Died += OnDied;
+            health.Damaged += OnDamaged;
+            health.Died += OnDied;
         }
 
         private void OnDisable()
         {
-            if (_health == null) return;
-            _health.Damaged -= OnDamaged;
-            _health.Died -= OnDied;
+            if (health == null)
+            {
+                return;
+            }
+
+            health.Damaged -= OnDamaged;
+            health.Died -= OnDied;
         }
 
         private void Start()
         {
-            _home = _rb.position;
-            _activateAt = Time.time + data.activationDelay;
-            TryFindTarget(force: true);
+            homePosition =
+                rigidBody.position;
+
+            FindTarget();
+            StartPatrolWait();
         }
 
         private void Update()
         {
-            if (_state == State.Dead) return;
-
-            if (!HasValidTarget())
+            if (currentState == State.Dead)
             {
-                TryFindTarget(force: false);
-                if (_state == State.Chase || _state == State.Attack)
-                    ChangeState(State.Idle); // player died / disappeared
+                return;
             }
 
-            switch (_state)
+            UpdateTarget();
+
+            switch (currentState)
             {
-                case State.Spawning: TickSpawning(); break;
-                case State.Idle:     TickIdle();     break;
-                case State.Chase:    TickChase();    break;
-                case State.Attack:   TickAttack();   break;
+                case State.Idle:
+                    UpdateIdle();
+                    break;
+
+                case State.Chase:
+                    UpdateChase();
+                    break;
+
+                case State.Attack:
+                    UpdateAttack();
+                    break;
             }
         }
 
         private void FixedUpdate()
         {
-            if (_state == State.Dead) return;
-            // Accelerate toward the desired velocity; knockback decays naturally the same way.
-            _rb.linearVelocity = Vector2.MoveTowards(
-                _rb.linearVelocity, _desiredVelocity, data.acceleration * Time.fixedDeltaTime);
-        }
-
-        // ───────────────────────── States ─────────────────────────
-
-        private void ChangeState(State next)
-        {
-            if (_state == next || _state == State.Dead) return;
-            _state = next;
-
-            switch (next)
+            if (currentState == State.Dead)
             {
-                case State.Idle:
-                    _desiredVelocity = Vector2.zero;
-                    StartPatrolWait();
-                    break;
-                case State.Chase:
-                    _retreatStuckTimer = 0f;
-                    break;
-                case State.Attack:
-                    _desiredVelocity = Vector2.zero;
-                    _lostSightTimer = 0f;
-                    _attackReadyAt = Time.time + data.firstBurstDelay;
-                    break;
-            }
-        }
-
-        private void TickSpawning()
-        {
-            _desiredVelocity = Vector2.zero;
-            if (Time.time >= _activateAt)
-                ChangeState(State.Idle);
-        }
-
-        private void TickIdle()
-        {
-            if (HasValidTarget() && DistanceToTarget() <= data.detectionRadius && HasLineOfSight())
-            {
-                ChangeState(State.Chase);
                 return;
             }
 
-            if (data.patrol) TickPatrol();
-            else _desiredVelocity = Vector2.zero;
+            rigidBody.linearVelocity =
+                desiredVelocity;
         }
 
-        private void TickChase()
+        private void UpdateIdle()
         {
-            Vector2 toTarget = ToTarget();
-            float dist = toTarget.magnitude;
-            Vector2 dir = dist > 0.001f ? toTarget / dist : Vector2.right;
-            bool los = HasLineOfSight();
-
-            RotateAim(dir);
-
-            // Too close -> back off.
-            if (dist < data.retreatDistance)
+            if (CanDetectTarget())
             {
-                _desiredVelocity = -dir * (data.moveSpeed * data.retreatSpeedMultiplier);
-
-                // Pinned against a wall: can't retreat, so fight back instead of freezing.
-                bool stuck = _rb.linearVelocity.sqrMagnitude < StuckSpeed * StuckSpeed;
-                _retreatStuckTimer = stuck ? _retreatStuckTimer + Time.deltaTime : 0f;
-                if (_retreatStuckTimer >= StuckRetreatTime && los)
-                {
-                    _ignoreRetreatUntil = Time.time + RetreatLockout;
-                    ChangeState(State.Attack);
-                }
-                return;
-            }
-            _retreatStuckTimer = 0f;
-
-            // Reached firing position.
-            if (los && dist <= data.preferredDistance)
-            {
-                ChangeState(State.Attack);
+                SetState(State.Chase);
                 return;
             }
 
-            // Too far or no line of sight -> approach. (No pathfinding yet: straight line.)
-            _desiredVelocity = dir * data.moveSpeed;
+            UpdatePatrol();
         }
 
-        private void TickAttack()
+        private void UpdateChase()
         {
-            _desiredVelocity = Vector2.zero;
+            if (!HasValidTarget())
+            {
+                SetState(State.Idle);
+                return;
+            }
 
-            Vector2 toTarget = ToTarget();
-            float dist = toTarget.magnitude;
+            Vector2 toTarget =
+                (Vector2)target.position -
+                rigidBody.position;
+
+            float distance =
+                toTarget.magnitude;
+
+            if (distance >
+                data.detectionRadius *
+                LoseTargetDistanceFactor)
+            {
+                SetState(State.Idle);
+                return;
+            }
+
+            bool hasLineOfSight =
+                HasLineOfSight();
+
+            float retreatDistance =
+                data.preferredDistance *
+                RetreatDistanceFactor;
+
+            if (hasLineOfSight)
+            {
+                RotateAim(toTarget);
+            }
+
+            if (hasLineOfSight &&
+                distance < retreatDistance)
+            {
+                Vector2 retreatTarget =
+                    rigidBody.position -
+                    toTarget.normalized *
+                    data.preferredDistance;
+
+                Vector2 retreatDirection =
+                    pathfinder.GetDirection(
+                        rigidBody.position,
+                        retreatTarget
+                    );
+
+                desiredVelocity =
+                    retreatDirection *
+                    data.moveSpeed;
+
+                return;
+            }
+
+            if (hasLineOfSight &&
+                distance <=
+                data.preferredDistance)
+            {
+                SetState(State.Attack);
+                return;
+            }
+
+            Vector2 moveDirection =
+                pathfinder.GetDirection(
+                    rigidBody.position,
+                    target.position
+                );
+
+            desiredVelocity =
+                moveDirection *
+                data.moveSpeed;
+
+            if (!hasLineOfSight &&
+                moveDirection != Vector2.zero)
+            {
+                RotateAim(moveDirection);
+            }
+        }
+
+        private void UpdateAttack()
+        {
+            desiredVelocity =
+                Vector2.zero;
+
+            if (!HasValidTarget())
+            {
+                SetState(State.Idle);
+                return;
+            }
+
+            Vector2 toTarget =
+                (Vector2)target.position -
+                rigidBody.position;
+
+            float distance =
+                toTarget.magnitude;
+
+            float retreatDistance =
+                data.preferredDistance *
+                RetreatDistanceFactor;
+
+            if (!HasLineOfSight() ||
+                distance >
+                data.preferredDistance ||
+                distance <
+                retreatDistance)
+            {
+                SetState(State.Chase);
+                return;
+            }
+
             RotateAim(toTarget);
 
-            bool los = HasLineOfSight();
-            _lostSightTimer = los ? 0f : _lostSightTimer + Time.deltaTime;
-
-            bool tooFar = dist > data.attackRange;
-            bool lostSight = _lostSightTimer > LostSightGrace;
-            bool tooClose = dist < data.retreatDistance && Time.time >= _ignoreRetreatUntil;
-
-            if (tooFar || lostSight || tooClose)
+            if (weapon != null &&
+                IsAimedAt(toTarget))
             {
-                // A burst in progress is allowed to finish — looks more natural.
-                ChangeState(State.Chase);
+                weapon.TryStartBurst();
+            }
+        }
+
+        private void UpdatePatrol()
+        {
+            if (data.patrolRadius <= 0f)
+            {
+                desiredVelocity =
+                    Vector2.zero;
+
                 return;
             }
 
-            if (weapon != null && los && Time.time >= _attackReadyAt && IsAimedAt(toTarget))
-                weapon.TryStartBurst();
-        }
-
-        // ───────────────────────── Patrol ─────────────────────────
-
-        private void TickPatrol()
-        {
-            if (_patrolWaiting)
+            if (waitingAtPatrolPoint)
             {
-                _desiredVelocity = Vector2.zero;
-                if (Time.time < _patrolWaitUntil) return;
+                desiredVelocity =
+                    Vector2.zero;
 
-                _patrolWaiting = false;
-                _patrolPoint = _home + UnityEngine.Random.insideUnitCircle * data.patrolRadius;
-                _patrolLegStartedAt = Time.time;
+                if (Time.time >=
+                    patrolWaitUntil)
+                {
+                    ChoosePatrolPoint();
+                }
+
+                return;
             }
 
-            Vector2 toPoint = _patrolPoint - _rb.position;
-            bool arrived = toPoint.magnitude <= PatrolArriveDistance;
-            bool tookTooLong = Time.time - _patrolLegStartedAt > PatrolMaxLegTime; // bumped into something
+            Vector2 toPatrolPoint =
+                patrolPoint -
+                rigidBody.position;
 
-            if (arrived || tookTooLong)
+            if (toPatrolPoint.magnitude <=
+                PatrolStopDistance)
             {
                 StartPatrolWait();
                 return;
             }
 
-            _desiredVelocity = toPoint.normalized * (data.moveSpeed * data.patrolSpeedMultiplier);
-            RotateAim(toPoint);
+            Vector2 moveDirection =
+                pathfinder.GetDirection(
+                    rigidBody.position,
+                    patrolPoint
+                );
+
+            if (moveDirection ==
+                Vector2.zero)
+            {
+                StartPatrolWait();
+                return;
+            }
+
+            desiredVelocity =
+                moveDirection *
+                data.moveSpeed *
+                PatrolSpeedFactor;
+
+            RotateAim(moveDirection);
+        }
+
+        private void ChoosePatrolPoint()
+        {
+            waitingAtPatrolPoint = false;
+
+            patrolPoint =
+                homePosition +
+                UnityEngine.Random.insideUnitCircle *
+                data.patrolRadius;
         }
 
         private void StartPatrolWait()
         {
-            _patrolWaiting = true;
-            _patrolWaitUntil = Time.time + UnityEngine.Random.Range(data.patrolWaitRange.x, data.patrolWaitRange.y);
+            waitingAtPatrolPoint =
+                true;
+
+            patrolWaitUntil =
+                Time.time +
+                UnityEngine.Random.Range(
+                    PatrolWaitMin,
+                    PatrolWaitMax
+                );
         }
 
-        // ───────────────────────── Health callbacks ─────────────────────────
-
-        private void OnDamaged(DamageInfo info)
+        private void SetState(State newState)
         {
-            if (_state == State.Dead) return;
+            if (currentState ==
+                State.Dead)
+            {
+                return;
+            }
 
-            if (data.knockback > 0f && info.Direction.sqrMagnitude > 0.0001f)
-                _rb.linearVelocity += info.Direction.normalized * data.knockback;
+            currentState =
+                newState;
 
-            // Got shot while idle -> "heard" the player, aggro immediately.
-            if (_state == State.Idle && HasValidTarget())
-                ChangeState(State.Chase);
+            if (newState ==
+                    State.Idle ||
+                newState ==
+                    State.Attack)
+            {
+                desiredVelocity =
+                    Vector2.zero;
+            }
+
+            if (newState ==
+                State.Idle)
+            {
+                StartPatrolWait();
+            }
+        }
+
+        private void UpdateTarget()
+        {
+            if (HasValidTarget())
+            {
+                return;
+            }
+
+            if (Time.time <
+                nextTargetSearchTime)
+            {
+                return;
+            }
+
+            nextTargetSearchTime =
+                Time.time +
+                TargetSearchInterval;
+
+            FindTarget();
+        }
+
+        private void FindTarget()
+        {
+            if (target == null)
+            {
+                GameObject player = null;
+
+                try
+                {
+                    player =
+                        GameObject.FindWithTag(
+                            playerTag
+                        );
+                }
+                catch (UnityException)
+                {
+                    return;
+                }
+
+                if (player == null)
+                {
+                    return;
+                }
+
+                target =
+                    player.transform;
+            }
+
+            targetHealth =
+                target.GetComponentInParent
+                    <IDamageable>();
+        }
+
+        private bool HasValidTarget()
+        {
+            return
+                target != null &&
+                target.gameObject
+                    .activeInHierarchy &&
+                (targetHealth == null ||
+                 targetHealth.IsAlive);
+        }
+
+        private bool CanDetectTarget()
+        {
+            if (!HasValidTarget())
+            {
+                return false;
+            }
+
+            Vector2 difference =
+                (Vector2)target.position -
+                rigidBody.position;
+
+            float detectionRadiusSquared =
+                data.detectionRadius *
+                data.detectionRadius;
+
+            return
+                difference.sqrMagnitude <=
+                detectionRadiusSquared;
+        }
+
+        private bool HasLineOfSight()
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            Vector2 origin =
+                aimPivot != null
+                    ? aimPivot.position
+                    : rigidBody.position;
+
+            RaycastHit2D[] hits =
+                Physics2D.LinecastAll(
+                    origin,
+                    target.position
+                );
+
+            foreach (RaycastHit2D hit in hits)
+            {
+                Collider2D collider =
+                    hit.collider;
+
+                if (collider == null ||
+                    collider.isTrigger)
+                {
+                    continue;
+                }
+
+                if (collider.transform ==
+                        transform ||
+                    collider.transform
+                        .IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                if (collider.transform ==
+                        target ||
+                    collider.transform
+                        .IsChildOf(target))
+                {
+                    continue;
+                }
+
+                int layer =
+                    collider.gameObject.layer;
+
+                if (layer == waterLayer ||
+                    layer == enemyLayer)
+                {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private void RotateAim(
+            Vector2 direction)
+        {
+            if (direction.sqrMagnitude <= 0f)
+            {
+                return;
+            }
+
+            float targetAngle =
+                Mathf.Atan2(
+                    direction.y,
+                    direction.x
+                ) * Mathf.Rad2Deg;
+
+            aimAngle =
+                Mathf.MoveTowardsAngle(
+                    aimAngle,
+                    targetAngle,
+                    AimTurnSpeed *
+                    Time.deltaTime
+                );
+
+            if (aimPivot != null)
+            {
+                aimPivot.rotation =
+                    Quaternion.Euler(
+                        0f,
+                        0f,
+                        aimAngle
+                    );
+            }
+
+            bool facingLeft =
+                Mathf.Cos(
+                    aimAngle *
+                    Mathf.Deg2Rad
+                ) < 0f;
+
+            if (bodyRenderer != null)
+            {
+                bodyRenderer.flipX =
+                    facingLeft;
+            }
+
+            if (gunRenderer != null)
+            {
+                gunRenderer.flipY =
+                    facingLeft;
+            }
+        }
+
+        private bool IsAimedAt(
+            Vector2 direction)
+        {
+            float angle =
+                aimAngle *
+                Mathf.Deg2Rad;
+
+            Vector2 aimDirection =
+                new Vector2(
+                    Mathf.Cos(angle),
+                    Mathf.Sin(angle)
+                );
+
+            return
+                Vector2.Angle(
+                    aimDirection,
+                    direction
+                ) <= AimTolerance;
+        }
+
+        private void OnDamaged(
+            DamageInfo damage)
+        {
+            if (currentState ==
+                    State.Idle &&
+                HasValidTarget())
+            {
+                SetState(State.Chase);
+            }
         }
 
         private void OnDied()
         {
-            if (_state == State.Dead) return;
-            _state = State.Dead;
+            currentState =
+                State.Dead;
 
-            if (weapon != null) weapon.StopFiring();
+            if (weapon != null)
+            {
+                weapon.StopFiring();
+            }
 
-            _desiredVelocity = Vector2.zero;
-            _rb.linearVelocity = Vector2.zero;
-            _rb.simulated = false;
-            foreach (var col in _colliders)
-                if (col != null) col.enabled = false;
+            desiredVelocity =
+                Vector2.zero;
 
-            if (deathVfxPrefab != null)
-                Instantiate(deathVfxPrefab, transform.position, Quaternion.identity);
+            rigidBody.linearVelocity =
+                Vector2.zero;
 
-            Died?.Invoke(this);
-            StartCoroutine(DeathRoutine());
+            rigidBody.simulated =
+                false;
+
+            foreach (
+                Collider2D collider
+                in colliders)
+            {
+                if (collider != null)
+                {
+                    collider.enabled =
+                        false;
+                }
+            }
+
+            StartCoroutine(
+                DeathRoutine()
+            );
         }
 
         private IEnumerator DeathRoutine()
         {
-            // Placeholder effect: spin + shrink. Replace with an Animator trigger when there's art.
-            float duration = Mathf.Max(0.01f, data.deathDuration);
-            Vector3 startScale = transform.localScale;
-            float t = 0f;
+            Vector3 startScale =
+                transform.localScale;
 
-            while (t < duration)
+            float elapsedTime = 0f;
+
+            while (elapsedTime <
+                   DeathDuration)
             {
-                t += Time.deltaTime;
-                float k = 1f - Mathf.Clamp01(t / duration);
-                transform.localScale = startScale * k;
-                transform.Rotate(0f, 0f, 720f * Time.deltaTime);
+                elapsedTime +=
+                    Time.deltaTime;
+
+                float progress =
+                    Mathf.Clamp01(
+                        elapsedTime /
+                        DeathDuration
+                    );
+
+                transform.localScale =
+                    startScale *
+                    (1f - progress);
+
+                transform.Rotate(
+                    0f,
+                    0f,
+                    DeathSpinSpeed *
+                    Time.deltaTime
+                );
+
                 yield return null;
             }
 
             Destroy(gameObject);
         }
 
-        // ───────────────────────── Targeting helpers ─────────────────────────
-
-        private void TryFindTarget(bool force)
-        {
-            if (!force && Time.time < _nextTargetSearch) return;
-            _nextTargetSearch = Time.time + TargetSearchInterval;
-
-            if (target == null)
-            {
-                GameObject player = null;
-                try { player = GameObject.FindWithTag(playerTag); }
-                catch (UnityException) { /* tag doesn't exist in project */ }
-
-                if (player == null) return;
-                target = player.transform;
-            }
-
-            _targetHealth = target.GetComponentInParent<IDamageable>();
-        }
-
-        private bool HasValidTarget() =>
-            target != null &&
-            target.gameObject.activeInHierarchy &&
-            (_targetHealth == null || _targetHealth.IsAlive);
-
-        private Vector2 ToTarget() => (Vector2)target.position - _rb.position;
-
-        private float DistanceToTarget() => ToTarget().magnitude;
-
-        private bool HasLineOfSight()
-        {
-            if (obstacleMask.value == 0) return true;
-            Vector2 from = aimPivot != null ? (Vector2)aimPivot.position : _rb.position;
-            return !Physics2D.Linecast(from, target.position, obstacleMask);
-        }
-
-        // ───────────────────────── Aiming ─────────────────────────
-
-        private Vector2 AimDirection
-        {
-            get
-            {
-                float rad = _aimAngle * Mathf.Deg2Rad;
-                return new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-            }
-        }
-
-        private void RotateAim(Vector2 dir)
-        {
-            if (dir.sqrMagnitude < 0.0001f) return;
-
-            float targetAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            _aimAngle = Mathf.MoveTowardsAngle(_aimAngle, targetAngle, data.turnSpeed * Time.deltaTime);
-
-            if (aimPivot != null) aimPivot.rotation = Quaternion.Euler(0f, 0f, _aimAngle);
-
-            bool facingLeft = AimDirection.x < 0f;
-            if (bodyRenderer != null) bodyRenderer.flipX = facingLeft;
-            if (gunRenderer != null) gunRenderer.flipY = facingLeft;
-        }
-
-        private bool IsAimedAt(Vector2 toTarget) =>
-            Vector2.Angle(AimDirection, toTarget) <= data.aimToleranceDeg;
-
-        // ───────────────────────── Gizmos ─────────────────────────
-
 #if UNITY_EDITOR
+
         private void OnDrawGizmosSelected()
         {
-            if (!drawGizmos || data == null) return;
-            Vector3 p = transform.position;
+            if (data == null)
+            {
+                return;
+            }
 
-            UnityEditor.Handles.color = new Color(1f, 1f, 0f, 0.5f);
-            UnityEditor.Handles.DrawWireDisc(p, Vector3.forward, data.detectionRadius);
-            UnityEditor.Handles.color = new Color(1f, 0.3f, 0.3f, 0.8f);
-            UnityEditor.Handles.DrawWireDisc(p, Vector3.forward, data.attackRange);
-            UnityEditor.Handles.color = new Color(0.3f, 1f, 0.3f, 0.8f);
-            UnityEditor.Handles.DrawWireDisc(p, Vector3.forward, data.preferredDistance);
-            UnityEditor.Handles.color = new Color(0.3f, 0.6f, 1f, 0.8f);
-            UnityEditor.Handles.DrawWireDisc(p, Vector3.forward, data.retreatDistance);
+            UnityEditor.Handles.DrawWireDisc(
+                transform.position,
+                Vector3.forward,
+                data.detectionRadius
+            );
 
-            if (Application.isPlaying)
-                UnityEditor.Handles.Label(p + Vector3.up * 0.8f, _state.ToString());
+            UnityEditor.Handles.DrawWireDisc(
+                transform.position,
+                Vector3.forward,
+                data.preferredDistance
+            );
         }
+
 #endif
     }
 }

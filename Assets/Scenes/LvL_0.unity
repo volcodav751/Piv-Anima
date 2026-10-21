@@ -4790,10 +4790,10 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
-    y: 0.050483804
-    width: 0.99999994
-    height: 0.90018934
+    x: 0.051660515
+    y: 0
+    width: 0.8965423
+    height: 1
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -7967,10 +7967,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1919189078050570153, guid: 6919e3b402b49204ba9f9ab3833d6702, type: 3}
-      propertyPath: target
-      value: 
-      objectReference: {fileID: 602356616446355234}
     - target: {fileID: 7667086146253836042, guid: 6919e3b402b49204ba9f9ab3833d6702, type: 3}
       propertyPath: m_Name
       value: SkeletonGunner
