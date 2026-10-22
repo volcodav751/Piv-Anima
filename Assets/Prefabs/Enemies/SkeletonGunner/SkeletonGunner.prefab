@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5291706713877338134}
   - component: {fileID: 55268682503878698}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101,7 +101,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1134544196655335290}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Muzzle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,7 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8008518469271292331}
   - component: {fileID: 8244454520784208544}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Gun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -224,7 +224,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7857987127650845067}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: AimPivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -263,7 +263,8 @@ GameObject:
   - component: {fileID: 1089522830354643299}
   - component: {fileID: 1919189078050570153}
   - component: {fileID: 3421989695094456722}
-  m_Layer: 7
+  - component: {fileID: 6877170952134312503}
+  m_Layer: 12
   m_Name: SkeletonGunner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -389,7 +390,7 @@ MonoBehaviour:
   muzzle: {fileID: 1134544196655335290}
   hitMask:
     serializedVersion: 2
-    m_Bits: 2048
+    m_Bits: 2087
 --- !u!114 &1919189078050570153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,11 +410,6 @@ MonoBehaviour:
   gunRenderer: {fileID: 8244454520784208544}
   target: {fileID: 0}
   playerTag: Player
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
-  deathVfxPrefab: {fileID: 0}
-  drawGizmos: 1
 --- !u!114 &3421989695094456722
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -427,7 +423,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Combat.HitFlash
   health: {fileID: 0}
-  renderers: []
-  flashMaterial: {fileID: 0}
+  renderers:
+  - {fileID: 55268682503878698}
+  flashMaterial: {fileID: 2100000, guid: e1d9219c240cd0145a7e03f5356dfcf8, type: 2}
   flashColor: {r: 1, g: 1, b: 1, a: 1}
-  duration: 0.08
+  duration: 0.15
+--- !u!114 &6877170952134312503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7667086146253836042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edd6a2a7e98253a4ebdae52f5dbfaaba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.EnemyPathfinder2D
