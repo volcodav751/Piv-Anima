@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 6636185475336809736}
   - component: {fileID: 7079026092030184380}
   - component: {fileID: 4499280897279619518}
+  - component: {fileID: 4985779002723503577}
   m_Layer: 11
   m_Name: Player
   m_TagString: Player
@@ -241,7 +242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a733807ac7a7914a9c06a308f1f0e19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Combat.Health
-  maxHealth: 5
+  maxHealth: 100
   invulnerabilityDuration: 0.5
 --- !u!212 &7079026092030184380
 SpriteRenderer:
@@ -315,6 +316,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a687d448dd48daa4790efc6f875f0aa9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDeath
+--- !u!114 &4985779002723503577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577484491786970365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9136633ed4d65ce4e8b5d5e15ce532ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealthRegeneration
+  regenerationAmount: 5
+  regenerationInterval: 5
 --- !u!1 &3522934893433423541
 GameObject:
   m_ObjectHideFlags: 0

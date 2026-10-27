@@ -1,3 +1,4 @@
+using Game.Combat;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -38,25 +39,45 @@ public class PlayerWeapon : MonoBehaviour
     private Camera mainCamera;
     private float nextShotTime;
     private Collider2D playerCollider;
+    private KnockbackReceiver knockbackReceiver;
 
     private bool shootingEnabled = true;
 
     private void Awake()
     {
         mainCamera = Camera.main;
-        playerCollider = GetComponent<Collider2D>();
+
+        playerCollider =
+            GetComponent<Collider2D>();
+
+        knockbackReceiver =
+            GetComponent<KnockbackReceiver>();
     }
 
     private void OnEnable()
     {
-        aimAction.action.Enable();
-        shootAction.action.Enable();
+        if (aimAction != null)
+        {
+            aimAction.action.Enable();
+        }
+
+        if (shootAction != null)
+        {
+            shootAction.action.Enable();
+        }
     }
 
     private void OnDisable()
     {
-        aimAction.action.Disable();
-        shootAction.action.Disable();
+        if (aimAction != null)
+        {
+            aimAction.action.Disable();
+        }
+
+        if (shootAction != null)
+        {
+            shootAction.action.Disable();
+        }
     }
 
     private void Update()
@@ -67,26 +88,46 @@ public class PlayerWeapon : MonoBehaviour
 
     private void Aim()
     {
+        if (aimAction == null ||
+            mainCamera == null ||
+            playerVisual == null)
+        {
+            return;
+        }
+
         Vector2 mouseScreenPosition =
             aimAction.action.ReadValue<Vector2>();
 
         Vector3 mouseWorldPosition =
-            mainCamera.ScreenToWorldPoint(mouseScreenPosition);
+            mainCamera.ScreenToWorldPoint(
+                mouseScreenPosition
+            );
 
         Vector2 direction =
-            mouseWorldPosition - transform.position;
+            mouseWorldPosition -
+            transform.position;
 
         float targetAngle =
-            Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            Mathf.Atan2(
+                direction.y,
+                direction.x
+            ) * Mathf.Rad2Deg;
 
         Quaternion targetRotation =
-            Quaternion.Euler(0f, 0f, targetAngle);
+            Quaternion.Euler(
+                0f,
+                0f,
+                targetAngle
+            );
 
-        playerVisual.rotation = Quaternion.RotateTowards(
-            playerVisual.rotation,
-            targetRotation,
-            aimSpeed * aimSpeedMultiplier * Time.deltaTime
-        );
+        playerVisual.rotation =
+            Quaternion.RotateTowards(
+                playerVisual.rotation,
+                targetRotation,
+                aimSpeed *
+                aimSpeedMultiplier *
+                Time.deltaTime
+            );
     }
 
     private void HandleShooting()
@@ -96,7 +137,14 @@ public class PlayerWeapon : MonoBehaviour
             return;
         }
 
-        if (!shootAction.action.IsPressed())
+        if (knockbackReceiver != null &&
+            knockbackReceiver.IsKnockedBack)
+        {
+            return;
+        }
+
+        if (shootAction == null ||
+            !shootAction.action.IsPressed())
         {
             return;
         }
@@ -108,11 +156,18 @@ public class PlayerWeapon : MonoBehaviour
 
         Shoot();
 
-        nextShotTime = Time.time + shootCooldown;
+        nextShotTime =
+            Time.time + shootCooldown;
     }
 
     private void Shoot()
     {
+        if (bulletPrefab == null ||
+            firePoint == null)
+        {
+            return;
+        }
+
         GameObject bullet = Instantiate(
             bulletPrefab,
             firePoint.position,
@@ -125,7 +180,8 @@ public class PlayerWeapon : MonoBehaviour
         Collider2D bulletCollider =
             bullet.GetComponent<Collider2D>();
 
-        if (bulletCollider != null && playerCollider != null)
+        if (bulletCollider != null &&
+            playerCollider != null)
         {
             Physics2D.IgnoreCollision(
                 bulletCollider,
@@ -133,18 +189,27 @@ public class PlayerWeapon : MonoBehaviour
             );
         }
 
-        bulletRigidBody.linearVelocity =
-            firePoint.right * bulletSpeed;
+        if (bulletRigidBody != null)
+        {
+            bulletRigidBody.linearVelocity =
+                firePoint.right * bulletSpeed;
+        }
 
-        Destroy(bullet, bulletLifetime);
+        Destroy(
+            bullet,
+            bulletLifetime
+        );
     }
 
-    public void SetAimSpeedMultiplier(float multiplier)
+    public void SetAimSpeedMultiplier(
+        float multiplier)
     {
-        aimSpeedMultiplier = Mathf.Max(0f, multiplier);
+        aimSpeedMultiplier =
+            Mathf.Max(0f, multiplier);
     }
 
-    public void SetShootingEnabled(bool enabled)
+    public void SetShootingEnabled(
+        bool enabled)
     {
         shootingEnabled = enabled;
     }

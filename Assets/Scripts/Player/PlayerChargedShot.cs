@@ -1,8 +1,10 @@
+using Game.Combat;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Game.Combat;
 
-[RequireComponent(typeof(PlayerController), typeof(PlayerWeapon))]
+[RequireComponent(
+    typeof(PlayerController),
+    typeof(PlayerWeapon))]
 public class PlayerChargedShot : MonoBehaviour
 {
     [Header("References")]
@@ -49,16 +51,31 @@ public class PlayerChargedShot : MonoBehaviour
     private bool isLaserActive;
     private float laserEndTime;
     private float nextLaserTime;
+    private KnockbackReceiver knockbackReceiver;
+
+    public bool IsLaserActive =>
+        isLaserActive;
 
     private void Awake()
     {
-        playerController = GetComponent<PlayerController>();
-        playerWeapon = GetComponent<PlayerWeapon>();
-        playerDash = GetComponent<PlayerDash>();
+        playerController =
+            GetComponent<PlayerController>();
 
-        laserLine.positionCount = 2;
-        laserLine.useWorldSpace = true;
-        laserLine.enabled = false;
+        playerWeapon =
+            GetComponent<PlayerWeapon>();
+
+        playerDash =
+            GetComponent<PlayerDash>();
+
+        knockbackReceiver =
+            GetComponent<KnockbackReceiver>();
+
+        if (laserLine != null)
+        {
+            laserLine.positionCount = 2;
+            laserLine.useWorldSpace = true;
+            laserLine.enabled = false;
+        }
     }
 
     private void OnEnable()
@@ -84,8 +101,17 @@ public class PlayerChargedShot : MonoBehaviour
 
     private void Update()
     {
+        if (isLaserActive &&
+            knockbackReceiver != null &&
+            knockbackReceiver.IsKnockedBack)
+        {
+            StopLaser();
+            return;
+        }
+
         if (chargedShotAction != null &&
-            chargedShotAction.action.WasPressedThisFrame())
+            chargedShotAction.action
+                .WasPressedThisFrame())
         {
             TryStartLaser();
         }
@@ -105,6 +131,12 @@ public class PlayerChargedShot : MonoBehaviour
 
     private void TryStartLaser()
     {
+        if (knockbackReceiver != null &&
+            knockbackReceiver.IsKnockedBack)
+        {
+            return;
+        }
+
         if (isLaserActive)
         {
             return;
@@ -120,39 +152,64 @@ public class PlayerChargedShot : MonoBehaviour
 
     private void StartLaser()
     {
+        if (laserLine == null ||
+            firePoint == null)
+        {
+            return;
+        }
+
         isLaserActive = true;
-        laserEndTime = Time.time + laserDuration;
 
-        playerController.SetMoveSpeedMultiplier(
-            laserMoveSpeedMultiplier
-        );
+        laserEndTime =
+            Time.time + laserDuration;
 
-        playerWeapon.SetAimSpeedMultiplier(
-            laserAimSpeedMultiplier
-        );
+        playerController
+            .SetMoveSpeedMultiplier(
+                laserMoveSpeedMultiplier
+            );
 
-        playerWeapon.SetShootingEnabled(false);
-        playerDash.SetDashEnabled(false);
+        playerWeapon
+            .SetAimSpeedMultiplier(
+                laserAimSpeedMultiplier
+            );
 
-        laserLine.startWidth = laserWidth;
-        laserLine.endWidth = laserWidth;
+        playerWeapon
+            .SetShootingEnabled(false);
+
+        if (playerDash != null)
+        {
+            playerDash
+                .SetDashEnabled(false);
+        }
+
+        laserLine.startWidth =
+            laserWidth;
+
+        laserLine.endWidth =
+            laserWidth;
+
         laserLine.enabled = true;
     }
 
     private void UpdateLaser()
     {
-        Vector2 origin = firePoint.position;
-        Vector2 direction = firePoint.right;
+        Vector2 origin =
+            firePoint.position;
 
-        RaycastHit2D[] hits = Physics2D.CircleCastAll(
-            origin,
-            laserWidth * 0.5f,
-            direction,
-            laserMaxDistance,
-            wallMask
-        );
+        Vector2 direction =
+            firePoint.right;
 
-        float nearestDistance = laserMaxDistance;
+        RaycastHit2D[] hits =
+            Physics2D.CircleCastAll(
+                origin,
+                laserWidth * 0.5f,
+                direction,
+                laserMaxDistance,
+                wallMask
+            );
+
+        float nearestDistance =
+            laserMaxDistance;
 
         foreach (RaycastHit2D hit in hits)
         {
@@ -161,7 +218,8 @@ public class PlayerChargedShot : MonoBehaviour
                 continue;
             }
 
-            if (hit.collider.transform.root == transform.root)
+            if (hit.collider.transform.root ==
+                transform.root)
             {
                 continue;
             }
@@ -178,7 +236,8 @@ public class PlayerChargedShot : MonoBehaviour
             }
 
             IDamageable damageable =
-                hit.collider.GetComponentInParent<IDamageable>();
+                hit.collider
+                    .GetComponentInParent<IDamageable>();
 
             if (damageable != null)
             {
@@ -187,29 +246,66 @@ public class PlayerChargedShot : MonoBehaviour
 
             if (hit.distance < nearestDistance)
             {
-                nearestDistance = hit.distance;
+                nearestDistance =
+                    hit.distance;
             }
         }
 
         Vector2 endPoint =
-            origin + direction * nearestDistance;
+            origin +
+            direction * nearestDistance;
 
-        laserLine.SetPosition(0, origin);
-        laserLine.SetPosition(1, endPoint);
+        laserLine.SetPosition(
+            0,
+            origin
+        );
+
+        laserLine.SetPosition(
+            1,
+            endPoint
+        );
+    }
+
+    public void CancelLaser()
+    {
+        if (!isLaserActive)
+        {
+            return;
+        }
+
+        StopLaser();
     }
 
     private void StopLaser()
     {
+        if (!isLaserActive)
+        {
+            return;
+        }
+
         isLaserActive = false;
 
-        laserLine.enabled = false;
+        if (laserLine != null)
+        {
+            laserLine.enabled = false;
+        }
 
-        playerController.SetMoveSpeedMultiplier(1f);
-        playerWeapon.SetAimSpeedMultiplier(1f);
+        playerController
+            .SetMoveSpeedMultiplier(1f);
 
-        playerWeapon.SetShootingEnabled(true);
-        playerDash.SetDashEnabled(true);
+        playerWeapon
+            .SetAimSpeedMultiplier(1f);
 
-        nextLaserTime = Time.time + laserCooldown;
+        playerWeapon
+            .SetShootingEnabled(true);
+
+        if (playerDash != null)
+        {
+            playerDash
+                .SetDashEnabled(true);
+        }
+
+        nextLaserTime =
+            Time.time + laserCooldown;
     }
 }
