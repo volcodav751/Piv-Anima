@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Kamikaze_Data
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.KamikazeEnemyData
   maxHealth: 3
-  moveSpeed: 2.8
+  moveSpeed: 2
   detectionRadius: 3.5
   triggerRange: 0.25
   fuseTime: 0.4
