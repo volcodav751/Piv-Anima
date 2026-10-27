@@ -1,4 +1,5 @@
 using UnityEngine;
+using Game.Combat;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class BossController : MonoBehaviour
@@ -16,6 +17,9 @@ public class BossController : MonoBehaviour
     [SerializeField] private float shootInterval = 2f;
 
     private Rigidbody2D rb;
+    private Health health;
+    private BossLaserAttack laser;
+
     private Vector2 moveTarget;
     private float moveTimer;
     private float shootTimer;
@@ -23,6 +27,14 @@ public class BossController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        health = GetComponent<Health>();
+        laser = GetComponent<BossLaserAttack>();
+    }
+
+    private void OnEnable()
+    {
+        if (health != null)
+            health.Died += OnDeath;
     }
 
     private void Start()
@@ -31,17 +43,46 @@ public class BossController : MonoBehaviour
         shootTimer = shootInterval;
     }
 
+    private void OnDisable()
+    {
+        if (health != null)
+            health.Died -= OnDeath;
+
+        if (laser != null)
+            laser.ResetAttack();
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+    }
+
     private void Update()
     {
-        // Через певний час вибираємо нову точку руху.
+        if (!CanAct())
+        {
+            if (laser != null)
+                laser.ResetAttack();
+
+            return;
+        }
+
+        if (laser != null && laser.isActiveAndEnabled)
+        {
+            laser.Tick(player, firePoint);
+
+            // Під час лазерної атаки звичайна стрільба зупинена.
+            if (laser.IsBusy)
+            {
+                shootTimer = Mathf.Max(0.1f, shootInterval);
+                rb.linearVelocity = Vector2.zero;
+                return;
+            }
+        }
+
         moveTimer -= Time.deltaTime;
 
         if (moveTimer <= 0f)
-        {
             ChooseMoveTarget();
-        }
 
-        // Відраховуємо час до наступного пострілу.
         shootTimer -= Time.deltaTime;
 
         if (shootTimer <= 0f)
@@ -53,13 +94,22 @@ public class BossController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        bool laserBusy =
+            laser != null &&
+            laser.isActiveAndEnabled &&
+            laser.IsBusy;
+
+        if (!CanAct() || laserBusy)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
         if (areaMin == null || areaMax == null)
             return;
 
         if (Vector2.Distance(rb.position, moveTarget) < 0.1f)
-        {
             ChooseMoveTarget();
-        }
 
         Vector2 nextPosition = Vector2.MoveTowards(
             rb.position,
@@ -68,6 +118,19 @@ public class BossController : MonoBehaviour
         );
 
         rb.MovePosition(nextPosition);
+    }
+
+    private bool CanAct()
+    {
+        if (health != null && !health.IsAlive)
+            return false;
+
+        if (player == null || !player.gameObject.activeInHierarchy)
+            return false;
+
+        Health playerHealth = player.GetComponentInParent<Health>();
+
+        return playerHealth == null || playerHealth.IsAlive;
     }
 
     private void ChooseMoveTarget()
@@ -92,9 +155,12 @@ public class BossController : MonoBehaviour
 
     private void Shoot()
     {
-        if (player == null || firePoint == null ||
+        if (player == null ||
+            firePoint == null ||
             projectilePrefab == null)
+        {
             return;
+        }
 
         Vector2 direction =
             (Vector2)player.position - (Vector2)firePoint.position;
@@ -108,6 +174,11 @@ public class BossController : MonoBehaviour
             Quaternion.identity
         );
 
-        projectile.Initialize(direction);
+        projectile.Initialize(direction, gameObject);
+    }
+
+    private void OnDeath()
+    {
+        enabled = false;
     }
 }
