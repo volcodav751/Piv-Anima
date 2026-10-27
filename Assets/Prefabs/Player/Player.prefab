@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4834269178454283289}
   - component: {fileID: 2429993727360774676}
   - component: {fileID: 6843323956941335494}
+  - component: {fileID: 7196173720616147425}
   - component: {fileID: 589670136352339623}
   - component: {fileID: 7269321216165238635}
   - component: {fileID: 1256727383243659942}
@@ -142,6 +143,19 @@ MonoBehaviour:
   shootCooldown: 0.25
   bulletSpeed: 5
   bulletLifetime: 3
+--- !u!114 &7196173720616147425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577484491786970365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34241b23f33a3ed4385de715c7bf9608, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Combat.KnockbackReceiver
+  decayPerStep: 0.85
 --- !u!114 &589670136352339623
 MonoBehaviour:
   m_ObjectHideFlags: 0

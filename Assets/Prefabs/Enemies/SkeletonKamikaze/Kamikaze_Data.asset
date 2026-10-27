@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ed2cc8984cc489498f70c61ac69402d, type: 3}
+  m_Name: Kamikaze_Data
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.KamikazeEnemyData
+  maxHealth: 3
+  moveSpeed: 2
+  detectionRadius: 3.5
+  triggerRange: 0.25
+  fuseTime: 0.4
+  explosionRadius: 0.6
+  explosionDamage: 2
+  knockbackSpeed: 5
+  knockbackStun: 0.25
+  explosionVfxPrefab: {fileID: 0}
+  deathVfxPrefab: {fileID: 0}
