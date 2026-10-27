@@ -23,5 +23,5 @@ MonoBehaviour:
   spreadDeg: 8
   projectilePrefab: {fileID: 6252802467758165061, guid: f70393ae8977ebc4a8962b1ef77c4be1, type: 3}
   projectileSpeed: 8
-  projectileDamage: 1
+  projectileDamage: 20
   projectileLifetime: 2.5

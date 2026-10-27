@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.KamikazeEnemyData
   maxHealth: 3
   moveSpeed: 2
-  detectionRadius: 3.5
+  detectionRadius: 2.5
   triggerRange: 0.25
   fuseTime: 0.4
   explosionRadius: 0.6
-  explosionDamage: 2
+  explosionDamage: 40
   knockbackSpeed: 5
   knockbackStun: 0.25
   explosionVfxPrefab: {fileID: 0}

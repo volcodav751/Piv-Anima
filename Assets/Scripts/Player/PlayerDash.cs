@@ -1,8 +1,11 @@
 using System.Collections;
+using Game.Combat;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(PlayerController))]
+[RequireComponent(
+    typeof(Rigidbody2D),
+    typeof(PlayerController))]
 public class PlayerDash : MonoBehaviour
 {
     [Header("Input")]
@@ -25,11 +28,23 @@ public class PlayerDash : MonoBehaviour
     private bool isDashing;
     private bool dashEnabled = true;
     private float nextDashTime;
+    private KnockbackReceiver knockbackReceiver;
+
+    private Coroutine dashRoutine;
+
+    public bool IsDashing =>
+        isDashing;
 
     private void Awake()
     {
-        rigidBody = GetComponent<Rigidbody2D>();
-        playerController = GetComponent<PlayerController>();
+        rigidBody =
+            GetComponent<Rigidbody2D>();
+
+        playerController =
+            GetComponent<PlayerController>();
+
+        knockbackReceiver =
+            GetComponent<KnockbackReceiver>();
     }
 
     private void OnEnable()
@@ -46,6 +61,8 @@ public class PlayerDash : MonoBehaviour
         {
             dashAction.action.Disable();
         }
+
+        CancelDash();
     }
 
     private void Update()
@@ -55,7 +72,8 @@ public class PlayerDash : MonoBehaviour
             return;
         }
 
-        if (dashAction.action.WasPressedThisFrame())
+        if (dashAction.action
+            .WasPressedThisFrame())
         {
             TryDash();
         }
@@ -63,6 +81,12 @@ public class PlayerDash : MonoBehaviour
 
     private void TryDash()
     {
+        if (knockbackReceiver != null &&
+            knockbackReceiver.IsKnockedBack)
+        {
+            return;
+        }
+
         if (!dashEnabled)
         {
             return;
@@ -78,37 +102,76 @@ public class PlayerDash : MonoBehaviour
             return;
         }
 
-        Vector2 direction = playerController.GetMoveInput();
+        Vector2 direction =
+            playerController.GetMoveInput();
 
         if (direction == Vector2.zero)
         {
             return;
         }
 
-        StartCoroutine(Dash(direction.normalized));
+        dashRoutine =
+            StartCoroutine(
+                Dash(direction.normalized)
+            );
     }
 
-    private IEnumerator Dash(Vector2 direction)
+    private IEnumerator Dash(
+        Vector2 direction)
     {
         isDashing = true;
-        nextDashTime = Time.time + dashCooldown;
 
-        playerController.SetMovementEnabled(false);
+        nextDashTime =
+            Time.time + dashCooldown;
 
-        float dashSpeed = dashDistance / dashDuration;
+        playerController
+            .SetMovementEnabled(false);
 
-        rigidBody.linearVelocity = direction * dashSpeed;
+        float dashSpeed =
+            dashDistance / dashDuration;
 
-        yield return new WaitForSeconds(dashDuration);
+        rigidBody.linearVelocity =
+            direction * dashSpeed;
 
-        rigidBody.linearVelocity = Vector2.zero;
+        yield return new WaitForSeconds(
+            dashDuration
+        );
 
-        playerController.SetMovementEnabled(true);
+        rigidBody.linearVelocity =
+            Vector2.zero;
+
+        isDashing = false;
+        dashRoutine = null;
+
+        if (knockbackReceiver == null ||
+            !knockbackReceiver.IsKnockedBack)
+        {
+            playerController
+                .SetMovementEnabled(true);
+        }
+    }
+
+    public void CancelDash()
+    {
+        if (!isDashing)
+        {
+            return;
+        }
+
+        if (dashRoutine != null)
+        {
+            StopCoroutine(dashRoutine);
+            dashRoutine = null;
+        }
+
+        rigidBody.linearVelocity =
+            Vector2.zero;
 
         isDashing = false;
     }
 
-    public void SetDashEnabled(bool enabled)
+    public void SetDashEnabled(
+        bool enabled)
     {
         dashEnabled = enabled;
     }

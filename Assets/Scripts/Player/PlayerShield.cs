@@ -1,7 +1,7 @@
 using System.Collections;
+using Game.Combat;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Game.Combat;
 
 [RequireComponent(
     typeof(PlayerController),
@@ -19,26 +19,40 @@ public class PlayerShield : MonoBehaviour
 
     [Header("Shield Settings")]
     [SerializeField, Min(0.1f)]
-    private float shieldDuration = 3f;
+    private float shieldDuration = 5f;
 
     [SerializeField, Min(0f)]
-    private float manaCost = 40f;
+    private float manaCost = 60f;
 
     private PlayerController playerController;
     private PlayerMana playerMana;
     private PlayerDash playerDash;
     private Health health;
+    private KnockbackReceiver knockbackReceiver;
+
+    private Coroutine shieldRoutine;
 
     private bool isShieldActive;
 
-    public bool IsShieldActive => isShieldActive;
+    public bool IsShieldActive =>
+        isShieldActive;
 
     private void Awake()
     {
-        playerController = GetComponent<PlayerController>();
-        playerMana = GetComponent<PlayerMana>();
-        playerDash = GetComponent<PlayerDash>();
-        health = GetComponent<Health>();
+        playerController =
+            GetComponent<PlayerController>();
+
+        playerMana =
+            GetComponent<PlayerMana>();
+
+        playerDash =
+            GetComponent<PlayerDash>();
+
+        health =
+            GetComponent<Health>();
+
+        knockbackReceiver =
+            GetComponent<KnockbackReceiver>();
 
         if (shieldVisual != null)
         {
@@ -61,6 +75,12 @@ public class PlayerShield : MonoBehaviour
             shieldAction.action.Disable();
         }
 
+        if (shieldRoutine != null)
+        {
+            StopCoroutine(shieldRoutine);
+            shieldRoutine = null;
+        }
+
         if (isShieldActive)
         {
             StopShield();
@@ -78,6 +98,12 @@ public class PlayerShield : MonoBehaviour
         {
             TryActivateShield();
         }
+
+        if (isShieldActive &&
+            shieldAction.action.WasReleasedThisFrame())
+        {
+            StopShieldEarly();
+        }
     }
 
     private void TryActivateShield()
@@ -87,19 +113,32 @@ public class PlayerShield : MonoBehaviour
             return;
         }
 
+        if (knockbackReceiver != null &&
+            knockbackReceiver.IsKnockedBack)
+        {
+            return;
+        }
+
         if (!playerMana.TrySpendMana(manaCost))
         {
             return;
         }
 
-        StartCoroutine(ShieldRoutine());
+        shieldRoutine =
+            StartCoroutine(
+                ShieldRoutine()
+            );
     }
 
     private IEnumerator ShieldRoutine()
     {
         StartShield();
 
-        yield return new WaitForSeconds(shieldDuration);
+        yield return new WaitForSeconds(
+            shieldDuration
+        );
+
+        shieldRoutine = null;
 
         StopShield();
     }
@@ -108,14 +147,19 @@ public class PlayerShield : MonoBehaviour
     {
         isShieldActive = true;
 
-        playerController.SetMovementEnabled(false);
-        playerMana.SetRegenerationPaused(true);
+        playerController
+            .SetMovementEnabled(false);
 
-        health.SetDamageBlocked(true);
+        playerMana
+            .SetRegenerationPaused(true);
+
+        health
+            .SetDamageBlocked(true);
 
         if (playerDash != null)
         {
-            playerDash.SetDashEnabled(false);
+            playerDash
+                .SetDashEnabled(false);
         }
 
         if (shieldVisual != null)
@@ -124,22 +168,52 @@ public class PlayerShield : MonoBehaviour
         }
 
         Debug.Log(
-            $"Shield activated for {shieldDuration:F1} seconds."
+            $"Shield activated. Maximum duration: {shieldDuration:F1} seconds."
         );
+    }
+
+    private void StopShieldEarly()
+    {
+        if (!isShieldActive)
+        {
+            return;
+        }
+
+        if (shieldRoutine != null)
+        {
+            StopCoroutine(shieldRoutine);
+            shieldRoutine = null;
+        }
+
+        StopShield();
     }
 
     private void StopShield()
     {
+        if (!isShieldActive)
+        {
+            return;
+        }
+
         isShieldActive = false;
 
-        playerController.SetMovementEnabled(true);
-        playerMana.SetRegenerationPaused(false);
+        if (knockbackReceiver == null ||
+            !knockbackReceiver.IsKnockedBack)
+        {
+            playerController
+                .SetMovementEnabled(true);
+        }
 
-        health.SetDamageBlocked(false);
+        playerMana
+            .SetRegenerationPaused(false);
+
+        health
+            .SetDamageBlocked(false);
 
         if (playerDash != null)
         {
-            playerDash.SetDashEnabled(true);
+            playerDash
+                .SetDashEnabled(true);
         }
 
         if (shieldVisual != null)
@@ -147,6 +221,28 @@ public class PlayerShield : MonoBehaviour
             shieldVisual.SetActive(false);
         }
 
-        Debug.Log("Shield ended. Mana regeneration resumed.");
+        Debug.Log(
+            "Shield ended. Mana regeneration resumed."
+        );
+    }
+
+    public void BreakShield()
+    {
+        if (!isShieldActive)
+        {
+            return;
+        }
+
+        if (shieldRoutine != null)
+        {
+            StopCoroutine(shieldRoutine);
+            shieldRoutine = null;
+        }
+
+        StopShield();
+
+        Debug.Log(
+            "Shield was broken."
+        );
     }
 }

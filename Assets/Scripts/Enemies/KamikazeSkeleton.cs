@@ -5,46 +5,73 @@ using UnityEngine;
 
 namespace Game.Enemies
 {
-    /// <summary>
-    /// Скелет-камикадзе: быстро бежит к игроку, подбегает — запал — взрыв (урон + откидывание).
-    /// Если его убили до взрыва — просто умирает, без взрыва.
-    /// Все цифры — в KamikazeEnemyData.
-    /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(Health))]
     [RequireComponent(typeof(EnemyPathfinder2D))]
     public class KamikazeSkeleton : MonoBehaviour
     {
-        [SerializeField] private KamikazeEnemyData data;
+        [Header("Config")]
+        [SerializeField]
+        private KamikazeEnemyData data;
 
-        [Header("Ссылки")]
-        [SerializeField] private SpriteRenderer bodyRenderer;
-        [SerializeField] private Transform target;
-        [SerializeField] private string playerTag = "Player";
+        [Header("References")]
+        [SerializeField]
+        private SpriteRenderer bodyRenderer;
 
-        [Header("Кого задевает взрыв")]
-        [SerializeField] private LayerMask hitMask;
+        [SerializeField]
+        private Transform target;
 
-        [Header("Запал")]
-        [SerializeField] private Color fuseColor = Color.white;
+        [SerializeField]
+        private string playerTag = "Player";
 
-        private enum State { Idle, Chase, Fuse, Dead }
+        [Header("Explosion")]
+        [SerializeField]
+        private LayerMask hitMask;
+
+        [Header("Fuse")]
+        [SerializeField]
+        private Color fuseColor = Color.white;
+
+        private const float DeathDuration = 0.4f;
+        private const float DeathSpinSpeed = 720f;
+
+        private enum State
+        {
+            Idle,
+            Chase,
+            Fuse,
+            Dead
+        }
+
         private State state = State.Idle;
 
         private Rigidbody2D rb;
         private Health health;
         private EnemyPathfinder2D pathfinder;
+        private Collider2D[] colliders;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
             health = GetComponent<Health>();
             pathfinder = GetComponent<EnemyPathfinder2D>();
-            if (bodyRenderer == null) bodyRenderer = GetComponentInChildren<SpriteRenderer>();
+
+            colliders =
+                GetComponentsInChildren<Collider2D>();
+
+            if (bodyRenderer == null)
+            {
+                bodyRenderer =
+                    GetComponentInChildren<SpriteRenderer>();
+            }
 
             if (data == null)
             {
-                Debug.LogError($"{name}: не назначен KamikazeEnemyData", this);
+                Debug.LogError(
+                    $"{name}: KamikazeEnemyData is not assigned.",
+                    this
+                );
+
                 enabled = false;
                 return;
             }
@@ -52,65 +79,137 @@ namespace Game.Enemies
             health.SetMaxHealth(data.maxHealth);
         }
 
-        private void OnEnable()  => health.Died += Die;
-        private void OnDisable() => health.Died -= Die;
+        private void OnEnable()
+        {
+            health.Died += Die;
+        }
+
+        private void OnDisable()
+        {
+            health.Died -= Die;
+        }
 
         private void Start()
         {
-            if (target == null)
+            if (target != null)
             {
-                var p = GameObject.FindGameObjectWithTag(playerTag);
-                if (p != null) target = p.transform;
+                return;
+            }
+
+            GameObject player =
+                GameObject.FindGameObjectWithTag(
+                    playerTag
+                );
+
+            if (player != null)
+            {
+                target = player.transform;
             }
         }
 
         private void FixedUpdate()
         {
-            if (state == State.Dead || state == State.Fuse || target == null)
+            if (state == State.Dead ||
+                state == State.Fuse ||
+                target == null)
             {
-                rb.linearVelocity = Vector2.zero;
+                rb.linearVelocity =
+                    Vector2.zero;
+
                 return;
             }
 
-            Vector2 toTarget = (Vector2)target.position - rb.position;
-            float dist = toTarget.magnitude;
+            Vector2 toTarget =
+                (Vector2)target.position -
+                rb.position;
 
-            if (dist <= data.triggerRange)
+            float distance =
+                toTarget.magnitude;
+
+            if (distance <= data.triggerRange)
             {
-                StartCoroutine(FuseRoutine());
+                StartCoroutine(
+                    FuseRoutine()
+                );
+
                 return;
             }
 
-            if (dist <= data.detectionRadius)
+            if (distance <= data.detectionRadius)
             {
                 state = State.Chase;
-                Vector2 dir = pathfinder.GetDirection(rb.position, target.position);
-                rb.linearVelocity = dir * data.moveSpeed; // dir бывает нулевым, если пути нет
 
-                if (bodyRenderer != null && Mathf.Abs(toTarget.x) > 0.01f)
-                    bodyRenderer.flipX = toTarget.x < 0;
+                Vector2 direction =
+                    pathfinder.GetDirection(
+                        rb.position,
+                        target.position
+                    );
+
+                rb.linearVelocity =
+                    direction *
+                    data.moveSpeed;
+
+                if (bodyRenderer != null &&
+                    Mathf.Abs(toTarget.x) > 0.01f)
+                {
+                    bodyRenderer.flipX =
+                        toTarget.x < 0f;
+                }
+
+                return;
             }
-            else
-            {
-                state = State.Idle;
-                rb.linearVelocity = Vector2.zero;
-            }
+
+            state = State.Idle;
+
+            rb.linearVelocity =
+                Vector2.zero;
         }
 
         private IEnumerator FuseRoutine()
         {
             state = State.Fuse;
-            rb.linearVelocity = Vector2.zero;
 
-            Color baseColor = bodyRenderer != null ? bodyRenderer.color : Color.white;
-            float t = 0f;
-            while (t < data.fuseTime)
+            rb.linearVelocity =
+                Vector2.zero;
+
+            Color baseColor =
+                bodyRenderer != null
+                    ? bodyRenderer.color
+                    : Color.white;
+
+            float elapsedTime = 0f;
+
+            while (elapsedTime < data.fuseTime)
             {
-                if (state == State.Dead) yield break;   // убили во время запала — без взрыва
+                if (state == State.Dead)
+                {
+                    yield break;
+                }
+
                 if (bodyRenderer != null)
-                    bodyRenderer.color = Mathf.PingPong(t * 20f, 1f) > 0.5f ? fuseColor : baseColor;
-                t += Time.deltaTime;
+                {
+                    bool flash =
+                        Mathf.PingPong(
+                            elapsedTime * 20f,
+                            1f
+                        ) > 0.5f;
+
+                    bodyRenderer.color =
+                        flash
+                            ? fuseColor
+                            : baseColor;
+                }
+
+                elapsedTime +=
+                    Time.deltaTime;
+
                 yield return null;
+            }
+
+            if (bodyRenderer != null)
+            {
+                bodyRenderer.color =
+                    baseColor;
             }
 
             Explode();
@@ -118,60 +217,219 @@ namespace Game.Enemies
 
         private void Explode()
         {
-            if (state == State.Dead) return;
-            state = State.Dead;
-
-            Vector2 center = transform.position;
-            var hits = Physics2D.OverlapCircleAll(center, data.explosionRadius, hitMask);
-            var alreadyHit = new HashSet<GameObject>(); // у одного объекта может быть несколько коллайдеров
-
-            foreach (var hit in hits)
+            if (state == State.Dead)
             {
-                GameObject root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
-                if (root == gameObject || !alreadyHit.Add(root)) continue;
-
-                Vector2 dir = ((Vector2)root.transform.position - center).normalized;
-                if (dir == Vector2.zero) dir = Random.insideUnitCircle.normalized;
-
-                if (root.TryGetComponent<IDamageable>(out var damageable))
-                    damageable.TakeDamage(new DamageInfo(data.explosionDamage, dir, gameObject));
-
-                if (root.TryGetComponent<KnockbackReceiver>(out var kb))
-                    kb.Apply(dir * data.knockbackSpeed, data.knockbackStun);
-                else if (hit.attachedRigidbody != null)
-                    hit.attachedRigidbody.linearVelocity = dir * data.knockbackSpeed;
+                return;
             }
 
-            Spawn(data.explosionVfxPrefab);
-            Destroy(gameObject);
+            state = State.Dead;
+
+            rb.linearVelocity =
+                Vector2.zero;
+
+            Vector2 center =
+                transform.position;
+
+            Collider2D[] hits =
+                Physics2D.OverlapCircleAll(
+                    center,
+                    data.explosionRadius,
+                    hitMask
+                );
+
+            HashSet<GameObject> alreadyHit =
+                new HashSet<GameObject>();
+
+            foreach (Collider2D hit in hits)
+            {
+                GameObject root =
+                    hit.attachedRigidbody != null
+                        ? hit.attachedRigidbody.gameObject
+                        : hit.gameObject;
+
+                if (root == gameObject ||
+                    !alreadyHit.Add(root))
+                {
+                    continue;
+                }
+
+                Vector2 direction =
+                    (Vector2)root.transform.position -
+                    center;
+
+                if (direction == Vector2.zero)
+                {
+                    direction =
+                        Random.insideUnitCircle.normalized;
+                }
+                else
+                {
+                    direction.Normalize();
+                }
+
+                if (root.TryGetComponent<IDamageable>(
+                    out var damageable))
+                {
+                    damageable.TakeDamage(
+                        new DamageInfo(
+                            data.explosionDamage,
+                            direction,
+                            gameObject
+                        )
+                    );
+                }
+
+                if (root.TryGetComponent<KnockbackReceiver>(
+                    out var knockbackReceiver))
+                {
+                    knockbackReceiver.Apply(
+                        direction *
+                        data.knockbackSpeed,
+                        data.knockbackStun
+                    );
+                }
+                else if (hit.attachedRigidbody != null)
+                {
+                    hit.attachedRigidbody
+                        .linearVelocity =
+                        direction *
+                        data.knockbackSpeed;
+                }
+            }
+
+            Spawn(
+                data.explosionVfxPrefab
+            );
+
+            StartDeath();
         }
 
-        // Вызывается через Health.Died — убили до взрыва
         private void Die()
         {
-            if (state == State.Dead) return;
-            state = State.Dead;
-            StopAllCoroutines();
-            rb.linearVelocity = Vector2.zero;
+            if (state == State.Dead)
+            {
+                return;
+            }
 
-            Spawn(data.deathVfxPrefab);
+            state = State.Dead;
+
+            StopAllCoroutines();
+
+            rb.linearVelocity =
+                Vector2.zero;
+
+            Spawn(
+                data.deathVfxPrefab
+            );
+
+            StartDeath();
+        }
+
+        private void StartDeath()
+        {
+            rb.linearVelocity =
+                Vector2.zero;
+
+            rb.simulated = false;
+
+            foreach (Collider2D collider in colliders)
+            {
+                if (collider != null)
+                {
+                    collider.enabled = false;
+                }
+            }
+
+            StartCoroutine(
+                DeathRoutine()
+            );
+        }
+
+        private IEnumerator DeathRoutine()
+        {
+            Vector3 startScale =
+                transform.localScale;
+
+            float elapsedTime = 0f;
+
+            while (elapsedTime <
+                   DeathDuration)
+            {
+                elapsedTime +=
+                    Time.deltaTime;
+
+                float progress =
+                    Mathf.Clamp01(
+                        elapsedTime /
+                        DeathDuration
+                    );
+
+                transform.localScale =
+                    startScale *
+                    (1f - progress);
+
+                transform.Rotate(
+                    0f,
+                    0f,
+                    DeathSpinSpeed *
+                    Time.deltaTime
+                );
+
+                yield return null;
+            }
+
             Destroy(gameObject);
         }
 
-        private void Spawn(GameObject prefab)
+        private void Spawn(
+            GameObject prefab)
         {
-            if (prefab != null) Instantiate(prefab, transform.position, Quaternion.identity);
+            if (prefab == null)
+            {
+                return;
+            }
+
+            Instantiate(
+                prefab,
+                transform.position,
+                Quaternion.identity
+            );
         }
 
         private void OnDrawGizmosSelected()
         {
-            if (data == null) return;
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, data.detectionRadius);
-            Gizmos.color = new Color(1f, 0.5f, 0f);
-            Gizmos.DrawWireSphere(transform.position, data.triggerRange);
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, data.explosionRadius);
+            if (data == null)
+            {
+                return;
+            }
+
+            Gizmos.color =
+                Color.yellow;
+
+            Gizmos.DrawWireSphere(
+                transform.position,
+                data.detectionRadius
+            );
+
+            Gizmos.color =
+                new Color(
+                    1f,
+                    0.5f,
+                    0f
+                );
+
+            Gizmos.DrawWireSphere(
+                transform.position,
+                data.triggerRange
+            );
+
+            Gizmos.color =
+                Color.red;
+
+            Gizmos.DrawWireSphere(
+                transform.position,
+                data.explosionRadius
+            );
         }
     }
 }
