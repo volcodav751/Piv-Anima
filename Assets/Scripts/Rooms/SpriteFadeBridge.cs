@@ -6,7 +6,7 @@ public class SpriteFadeBridge : MonoBehaviour
     [Range(0.1f, 1f)]
     public float fadedAlpha = 0.4f; 
     public float fadeSpeed = 10f;   
-    public RoomCameraController roomController; 
+    public RoomCameraController_lvl1 roomController; 
 
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
@@ -22,7 +22,7 @@ public class SpriteFadeBridge : MonoBehaviour
 
         if (roomController == null)
         {
-            roomController = FindAnyObjectByType<RoomCameraController>();
+            roomController = FindAnyObjectByType<RoomCameraController_lvl1>();
         }
     }
 

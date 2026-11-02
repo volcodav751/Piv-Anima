@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class RoomCameraController : MonoBehaviour
+public class RoomCameraController_lvl1 : MonoBehaviour
 {
     public Transform player;
     public float moveSpeed = 5f;
