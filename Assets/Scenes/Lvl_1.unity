@@ -2428,9 +2428,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.049215104
-    width: 1
-    height: 0.9001909
+    y: 0.049462367
+    width: 1.0006716
+    height: 0.9012097
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2546,14 +2546,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b452fdf574d807b4bb8a5f703764abba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomCameraController
-  player: {fileID: 1603913388}
-  moveSpeed: 5
-  isAreaCleared: 0
-  bridgeBlocker: {fileID: 678974588}
-  bridgeArcCollider: {fileID: 2118930646}
-  lockedCameraX: 3.6
-  minX: 3.6
-  maxX: 5.5
 --- !u!4 &698472469 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8803299610784439594, guid: d2acfaa3b8bf1404ba5500471b5ef9ae, type: 3}
@@ -7298,6 +7290,14 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3828340012466073965, guid: 09009c39531b71c4092b59c25cd71a5a, type: 3}
+      propertyPath: playerMana
+      value: 
+      objectReference: {fileID: 1944808002}
+    - target: {fileID: 3828340012466073965, guid: 09009c39531b71c4092b59c25cd71a5a, type: 3}
+      propertyPath: playerHealth
+      value: 
+      objectReference: {fileID: 1944808000}
     - target: {fileID: 5229087063864989131, guid: 09009c39531b71c4092b59c25cd71a5a, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -7998,6 +7998,28 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.57061195, y: 0.6559837}
   m_EdgeRadius: 0
+--- !u!114 &1944808000 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6636185475336809736, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
+  m_PrefabInstance: {fileID: 423729109}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1944807984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a733807ac7a7914a9c06a308f1f0e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Combat.Health
+--- !u!114 &1944808002 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1256727383243659942, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
+  m_PrefabInstance: {fileID: 423729109}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1944807984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4748588652af2d247a8f87106f5ff52b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMana
 --- !u!1001 &1946949900
 PrefabInstance:
   m_ObjectHideFlags: 0

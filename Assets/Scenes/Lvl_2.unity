@@ -8080,9 +8080,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
-    width: 1
-    height: 1
+    y: 0.049462367
+    width: 1.0006716
+    height: 0.9012097
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -11815,6 +11815,28 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.57061195, y: 0.6559837}
   m_EdgeRadius: 0
+--- !u!114 &977621667 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6636185475336809736, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
+  m_PrefabInstance: {fileID: 977621660}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977621662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a733807ac7a7914a9c06a308f1f0e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Combat.Health
+--- !u!114 &977621669 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1256727383243659942, guid: 718fc1a145520cd418dbc930bd6d252b, type: 3}
+  m_PrefabInstance: {fileID: 977621660}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977621662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4748588652af2d247a8f87106f5ff52b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMana
 --- !u!1 &1007176757
 GameObject:
   m_ObjectHideFlags: 0
@@ -14088,6 +14110,14 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3828340012466073965, guid: 09009c39531b71c4092b59c25cd71a5a, type: 3}
+      propertyPath: playerMana
+      value: 
+      objectReference: {fileID: 977621669}
+    - target: {fileID: 3828340012466073965, guid: 09009c39531b71c4092b59c25cd71a5a, type: 3}
+      propertyPath: playerHealth
+      value: 
+      objectReference: {fileID: 977621667}
     - target: {fileID: 5229087063864989131, guid: 09009c39531b71c4092b59c25cd71a5a, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
