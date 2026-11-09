@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Game.Combat;
 using UnityEngine;
 
 namespace Game.Enemies.Spawning
@@ -21,17 +22,15 @@ namespace Game.Enemies.Spawning
             spawnChance;
     }
 
-    public class TimedEnemySpawner : MonoBehaviour
+    [Serializable]
+    public class EnemyWave
     {
-        [Header("Spawn Settings")]
-        [SerializeField]
-        private bool spawnOnStart = true;
-
+        [Header("Wave Settings")]
         [SerializeField, Min(1)]
-        private int totalEnemyCount = 10;
+        private int enemyCount = 5;
 
         [SerializeField, Min(0.1f)]
-        private float spawnInterval = 3f;
+        private float spawnInterval = 2f;
 
         [SerializeField, Min(1)]
         private int enemiesPerSpawn = 1;
@@ -40,12 +39,40 @@ namespace Game.Enemies.Spawning
         [SerializeField]
         private EnemySpawnOption[] enemyOptions;
 
+        public int EnemyCount =>
+            enemyCount;
+
+        public float SpawnInterval =>
+            spawnInterval;
+
+        public int EnemiesPerSpawn =>
+            enemiesPerSpawn;
+
+        public EnemySpawnOption[] EnemyOptions =>
+            enemyOptions;
+    }
+
+    public class TimedEnemySpawner : MonoBehaviour
+    {
+        [Header("General Settings")]
+        [SerializeField]
+        private bool spawnOnStart = true;
+
+        [SerializeField, Min(0f)]
+        private float firstWaveDelay = 2f;
+
+        [Header("Waves")]
+        [SerializeField]
+        private EnemyWave[] waves;
+
         [Header("Spawn Points")]
         [SerializeField]
         private EnemySpawnPoint[] spawnPoints;
 
         private Coroutine spawnRoutine;
-        private int spawnedEnemyCount;
+
+        private int aliveEnemyCount;
+        private int pendingSpawnCount;
 
         private void Start()
         {
@@ -62,12 +89,6 @@ namespace Game.Enemies.Spawning
                 return;
             }
 
-            if (spawnedEnemyCount >=
-                totalEnemyCount)
-            {
-                return;
-            }
-
             if (!HasValidSetup())
             {
                 return;
@@ -75,7 +96,7 @@ namespace Game.Enemies.Spawning
 
             spawnRoutine =
                 StartCoroutine(
-                    SpawnRoutine()
+                    WavesRoutine()
                 );
         }
 
@@ -91,39 +112,91 @@ namespace Game.Enemies.Spawning
             spawnRoutine = null;
         }
 
-        private IEnumerator SpawnRoutine()
+        private IEnumerator WavesRoutine()
         {
-            while (spawnedEnemyCount <
-                   totalEnemyCount)
+            if (firstWaveDelay > 0f)
             {
-                SpawnBatch();
-
-                if (spawnedEnemyCount >=
-                    totalEnemyCount)
-                {
-                    break;
-                }
-
                 yield return new WaitForSeconds(
-                    spawnInterval
+                    firstWaveDelay
                 );
             }
+
+            for (int waveIndex = 0;
+                 waveIndex < waves.Length;
+                 waveIndex++)
+            {
+                EnemyWave wave =
+                    waves[waveIndex];
+
+                yield return SpawnWave(
+                    wave,
+                    waveIndex
+                );
+
+                yield return new WaitUntil(
+                    () =>
+                        pendingSpawnCount == 0 &&
+                        aliveEnemyCount == 0
+                );
+
+                Debug.Log(
+                    $"Wave {waveIndex + 1} completed."
+                );
+            }
+
+            Debug.Log(
+                "All enemy waves completed."
+            );
 
             spawnRoutine = null;
         }
 
-        private void SpawnBatch()
+        private IEnumerator SpawnWave(
+            EnemyWave wave,
+            int waveIndex)
         {
-            int remainingEnemyCount =
-                totalEnemyCount -
-                spawnedEnemyCount;
+            Debug.Log(
+                $"Wave {waveIndex + 1} started."
+            );
 
-            int batchSize =
-                Mathf.Min(
-                    enemiesPerSpawn,
-                    remainingEnemyCount
+            int spawnedEnemyCount = 0;
+
+            while (spawnedEnemyCount <
+                   wave.EnemyCount)
+            {
+                int remainingEnemyCount =
+                    wave.EnemyCount -
+                    spawnedEnemyCount;
+
+                int batchSize =
+                    Mathf.Min(
+                        wave.EnemiesPerSpawn,
+                        remainingEnemyCount
+                    );
+
+                SpawnBatch(
+                    wave,
+                    batchSize
                 );
 
+                spawnedEnemyCount +=
+                    batchSize;
+
+                if (spawnedEnemyCount <
+                    wave.EnemyCount)
+                {
+                    yield return
+                        new WaitForSeconds(
+                            wave.SpawnInterval
+                        );
+                }
+            }
+        }
+
+        private void SpawnBatch(
+            EnemyWave wave,
+            int batchSize)
+        {
             List<EnemySpawnPoint>
                 availableSpawnPoints =
                     GetValidSpawnPoints();
@@ -133,11 +206,18 @@ namespace Game.Enemies.Spawning
                  i++)
             {
                 GameObject enemyPrefab =
-                    GetRandomEnemy();
+                    GetRandomEnemy(
+                        wave.EnemyOptions
+                    );
 
                 if (enemyPrefab == null)
                 {
-                    return;
+                    Debug.LogWarning(
+                        $"{name}: wave has no valid enemy prefabs.",
+                        this
+                    );
+
+                    continue;
                 }
 
                 if (availableSpawnPoints.Count == 0)
@@ -146,7 +226,12 @@ namespace Game.Enemies.Spawning
                         GetValidSpawnPoints();
                 }
 
-                int spawnPointIndex =
+                if (availableSpawnPoints.Count == 0)
+                {
+                    return;
+                }
+
+                int randomPointIndex =
                     UnityEngine.Random.Range(
                         0,
                         availableSpawnPoints.Count
@@ -154,23 +239,72 @@ namespace Game.Enemies.Spawning
 
                 EnemySpawnPoint spawnPoint =
                     availableSpawnPoints[
-                        spawnPointIndex
+                        randomPointIndex
                     ];
 
                 availableSpawnPoints.RemoveAt(
-                    spawnPointIndex
+                    randomPointIndex
                 );
+
+                pendingSpawnCount++;
 
                 spawnPoint.Spawn(
-                    enemyPrefab
+                    enemyPrefab,
+                    OnEnemySpawned
                 );
-
-                spawnedEnemyCount++;
             }
         }
 
-        private GameObject GetRandomEnemy()
+        private void OnEnemySpawned(
+            GameObject enemy)
         {
+            pendingSpawnCount =
+                Mathf.Max(
+                    0,
+                    pendingSpawnCount - 1
+                );
+
+            if (enemy == null)
+            {
+                return;
+            }
+
+            Health health =
+                enemy.GetComponent<Health>();
+
+            if (health == null)
+            {
+                Debug.LogWarning(
+                    $"{enemy.name} has no Health component.",
+                    enemy
+                );
+
+                return;
+            }
+
+            aliveEnemyCount++;
+
+            health.Died += OnEnemyDied;
+        }
+
+        private void OnEnemyDied()
+        {
+            aliveEnemyCount =
+                Mathf.Max(
+                    0,
+                    aliveEnemyCount - 1
+                );
+        }
+
+        private GameObject GetRandomEnemy(
+            EnemySpawnOption[] enemyOptions)
+        {
+            if (enemyOptions == null ||
+                enemyOptions.Length == 0)
+            {
+                return null;
+            }
+
             float totalChance = 0f;
             GameObject fallbackEnemy = null;
 
@@ -230,10 +364,16 @@ namespace Game.Enemies.Spawning
             List<EnemySpawnPoint> result =
                 new List<EnemySpawnPoint>();
 
+            if (spawnPoints == null)
+            {
+                return result;
+            }
+
             foreach (EnemySpawnPoint point
                      in spawnPoints)
             {
-                if (point != null)
+                if (point != null &&
+                    point.gameObject.activeInHierarchy)
                 {
                     result.Add(point);
                 }
@@ -244,11 +384,11 @@ namespace Game.Enemies.Spawning
 
         private bool HasValidSetup()
         {
-            if (enemyOptions == null ||
-                enemyOptions.Length == 0)
+            if (waves == null ||
+                waves.Length == 0)
             {
                 Debug.LogError(
-                    $"{name}: no enemies are assigned.",
+                    $"{name}: no waves are configured.",
                     this
                 );
 

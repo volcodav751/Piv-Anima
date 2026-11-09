@@ -301,6 +301,8 @@ namespace Game.Enemies
                 data.explosionVfxPrefab
             );
 
+            health.Kill(gameObject);
+
             StartDeath();
         }
 
