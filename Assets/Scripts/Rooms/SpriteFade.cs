@@ -22,6 +22,8 @@ public class SpriteFade : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (!isActiveAndEnabled || spriteRenderer == null) return;
+        
         if (collision.CompareTag("Player"))
         {
             StopAllCoroutines();
@@ -31,6 +33,8 @@ public class SpriteFade : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
+        if (!isActiveAndEnabled || spriteRenderer == null) return;
+
         if (collision.CompareTag("Player"))
         {
             StopAllCoroutines();
