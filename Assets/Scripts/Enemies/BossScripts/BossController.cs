@@ -1,7 +1,8 @@
 using UnityEngine;
+using System.Collections.Generic;
 using Game.Combat;
 
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Health), typeof(BossShockwaveAttack))]
 public class BossController : MonoBehaviour
 {
     [Header("Рух")]
@@ -9,6 +10,16 @@ public class BossController : MonoBehaviour
     [SerializeField] private Transform areaMin;
     [SerializeField] private Transform areaMax;
     [SerializeField] private float changeTargetInterval = 4f;
+
+    [Header("Друга фаза")]
+    [SerializeField, Min(1)] private int phaseTwoHealth = 50;
+    [SerializeField, Min(0.1f)] private float flyingSpeed = 5f;
+    [Tooltip("Шари перешкод: Default, Water та окремі шари стін, якщо є.")]
+    [SerializeField] private LayerMask obstacleMask = 17;
+    public bool IsPhaseTwo { get; private set; }
+
+    private BossShockwaveAttack shockwave;
+    private readonly List<RaycastHit2D> movementHits = new List<RaycastHit2D>();
 
     [Header("Стрільба")]
     [SerializeField] private Transform player;
@@ -29,6 +40,13 @@ public class BossController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
         laser = GetComponent<BossLaserAttack>();
+        shockwave = GetComponent<BossShockwaveAttack>();
+        if (shockwave == null) shockwave = gameObject.AddComponent<BossShockwaveAttack>();
+        // Kinematic movement is clipped explicitly against scenery in phase one.
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.useFullKinematicContacts = false;
+        rb.gravityScale = 0f;
+        rb.freezeRotation = true;
     }
 
     private void OnEnable()
@@ -48,6 +66,9 @@ public class BossController : MonoBehaviour
         if (health != null)
             health.Died -= OnDeath;
 
+        if (shockwave != null)
+            shockwave.ResetAttack();
+
         if (laser != null)
             laser.ResetAttack();
 
@@ -61,8 +82,31 @@ public class BossController : MonoBehaviour
         {
             if (laser != null)
                 laser.ResetAttack();
+            if (shockwave != null)
+                shockwave.ResetAttack();
 
             return;
+        }
+
+        if (!IsPhaseTwo && health != null && health.Current <= phaseTwoHealth)
+        {
+            IsPhaseTwo = true;
+            if (laser != null) laser.ResetAttack();
+            shockwave.ResetAttack();
+            ChooseMoveTarget();
+        }
+
+        if (IsPhaseTwo && shockwave.isActiveAndEnabled)
+        {
+            // Laser and wave cannot charge simultaneously.
+            if (laser == null || !laser.isActiveAndEnabled || !laser.IsBusy)
+                shockwave.Tick(player);
+            if (shockwave.IsBusy)
+            {
+                rb.linearVelocity = Vector2.zero;
+                shootTimer = Mathf.Max(0.1f, shootInterval);
+                return;
+            }
         }
 
         if (laser != null && laser.isActiveAndEnabled)
@@ -99,14 +143,17 @@ public class BossController : MonoBehaviour
             laser.isActiveAndEnabled &&
             laser.IsBusy;
 
-        if (!CanAct() || laserBusy)
+        if (!CanAct() || laserBusy || (shockwave.isActiveAndEnabled && shockwave.IsBusy))
         {
             rb.linearVelocity = Vector2.zero;
             return;
         }
 
         if (areaMin == null || areaMax == null)
+        {
+            rb.linearVelocity = Vector2.zero;
             return;
+        }
 
         if (Vector2.Distance(rb.position, moveTarget) < 0.1f)
             ChooseMoveTarget();
@@ -114,9 +161,31 @@ public class BossController : MonoBehaviour
         Vector2 nextPosition = Vector2.MoveTowards(
             rb.position,
             moveTarget,
-            moveSpeed * Time.fixedDeltaTime
+            (IsPhaseTwo ? flyingSpeed : moveSpeed) * Time.fixedDeltaTime
         );
 
+        if (!IsPhaseTwo)
+        {
+            Vector2 step = nextPosition - rb.position;
+            if (step.sqrMagnitude > 0.000001f)
+            {
+                var filter = new ContactFilter2D { useTriggers = false };
+                filter.SetLayerMask(obstacleMask);
+                rb.Cast(step.normalized, filter, movementHits, step.magnitude + 0.03f);
+                float distance = step.magnitude;
+                bool blocked = false;
+                foreach (var hit in movementHits)
+                {
+                    if (hit.collider.GetComponentInParent<IDamageable>() != null)
+                        continue;
+                    distance = Mathf.Min(distance, Mathf.Max(0f, hit.distance - 0.03f));
+                    blocked = true;
+                }
+                nextPosition = rb.position + step.normalized * distance;
+                if (blocked) ChooseMoveTarget();
+            }
+        }
+        // Kinematic bodies pass static scenery in flight, but remain hittable by bullets.
         rb.MovePosition(nextPosition);
     }
 
