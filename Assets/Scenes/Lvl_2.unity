@@ -8080,9 +8080,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.049462367
-    width: 1.0006716
-    height: 0.9012097
+    y: 0.27592593
+    width: 0.27812502
+    height: 0.278125
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -11171,7 +11171,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.012890577, y: -0.0545187}
+  m_Offset: {x: -0.016102314, y: -0.0545187}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -11181,7 +11181,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.16990614, y: 2.9858031}
+  m_Size: {x: 0.17632961, y: 2.9858031}
   m_EdgeRadius: 0
 --- !u!4 &932779830
 Transform:
@@ -18220,7 +18220,7 @@ Transform:
   m_GameObject: {fileID: 1515394380}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.0551603, y: 0.27472997, z: 0}
+  m_LocalPosition: {x: 1.0551603, y: 0.209, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
