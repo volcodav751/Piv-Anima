@@ -16,6 +16,9 @@ EditorBuildSettings:
     guid: c79124384b98bdb46886c4aa54151bca
   - enabled: 1
     path: Assets/Scenes/lvl_3.unity
+    guid: fc737c29460975548ae3bf09b29b3c17
+  - enabled: 1
+    path: Assets/Scenes/lvl_boss.unity
     guid: 9c929e7c3316018459fbfa944a06e7f8
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
