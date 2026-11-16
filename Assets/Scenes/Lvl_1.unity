@@ -2336,6 +2336,7 @@ GameObject:
   m_Component:
   - component: {fileID: 678974590}
   - component: {fileID: 678974589}
+  - component: {fileID: 678974591}
   m_Layer: 0
   m_Name: BridgeBlocker
   m_TagString: Untagged
@@ -2429,6 +2430,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &678974591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678974588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8a38e52936b3541907a4c2a5893221, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PassageBlocker
+  blockerCollider: {fileID: 678974589}
 --- !u!1 &680348583
 GameObject:
   m_ObjectHideFlags: 0
@@ -2486,9 +2500,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
+    y: 0.15441176
     width: 1
-    height: 1
+    height: 0.6907169
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -4522,6 +4536,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: waves.Array.data[0].enemyOptions.Array.data[0].enemyPrefab
       value: 
       objectReference: {fileID: 7667086146253836042, guid: 6919e3b402b49204ba9f9ab3833d6702, type: 3}
@@ -4544,6 +4562,30 @@ PrefabInstance:
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: waves.Array.data[2].enemyOptions.Array.data[0].spawnChance
       value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 678974591}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Unlock
+      objectReference: {fileID: 0}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: PassageBlocker, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
+      propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 7510831006646113606, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: m_Name

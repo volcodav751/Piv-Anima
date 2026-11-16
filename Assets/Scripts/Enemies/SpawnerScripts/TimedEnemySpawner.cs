@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Game.Combat;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Game.Enemies.Spawning
 {
@@ -69,10 +70,15 @@ namespace Game.Enemies.Spawning
         [SerializeField]
         private EnemySpawnPoint[] spawnPoints;
 
+        [Header("Events")]
+        [SerializeField]
+        private UnityEvent onAllWavesCompleted;
+
         private Coroutine spawnRoutine;
 
         private int aliveEnemyCount;
         private int pendingSpawnCount;
+        private bool allWavesCompletedInvoked;
 
         private void Start()
         {
@@ -144,9 +150,18 @@ namespace Game.Enemies.Spawning
                 );
             }
 
-            Debug.Log(
-                "All enemy waves completed."
-            );
+            if (!allWavesCompletedInvoked &&
+                aliveEnemyCount == 0 &&
+                pendingSpawnCount == 0)
+            {
+                allWavesCompletedInvoked = true;
+
+                Debug.Log(
+                    "All enemy waves completed."
+                );
+
+                onAllWavesCompleted?.Invoke();
+            }
 
             spawnRoutine = null;
         }

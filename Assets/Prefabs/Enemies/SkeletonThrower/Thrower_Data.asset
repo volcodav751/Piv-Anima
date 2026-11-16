@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47898ea14b833674ea5a07c813868a08, type: 3}
   m_Name: Thrower_Data
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.ThrowerEnemyData
-  maxHealth: 8
+  maxHealth: 5
   moveSpeed: 2
   detectionRadius: 3.5
   retreatDistance: 0.9

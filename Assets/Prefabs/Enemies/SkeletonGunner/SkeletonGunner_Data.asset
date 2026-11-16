@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a2ea75c6c0f7764d8dbb38fbda2ecdc, type: 3}
   m_Name: SkeletonGunner_Data
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.RangedEnemyData
-  maxHealth: 10
+  maxHealth: 5
   moveSpeed: 1
   patrolRadius: 1.5
   detectionRadius: 2.5
