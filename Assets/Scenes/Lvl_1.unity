@@ -2500,9 +2500,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.15441176
+    y: 0
     width: 1
-    height: 0.6907169
+    height: 1
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2615,11 +2615,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 680348583}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b452fdf574d807b4bb8a5f703764abba, type: 3}
+  m_Script: {fileID: 11500000, guid: 38e08d77850437349810d4111cc7bad7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomCameraController
+  player: {fileID: 1603913388}
+  moveSpeed: 5
   isAreaCleared: 0
   bridgeBlocker: {fileID: 0}
+  bridgeArcCollider: {fileID: 0}
+  lockedCameraX: 3.6
+  minX: 3.6
+  maxX: 5.5
 --- !u!4 &698472469 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8803299610784439594, guid: d2acfaa3b8bf1404ba5500471b5ef9ae, type: 3}
