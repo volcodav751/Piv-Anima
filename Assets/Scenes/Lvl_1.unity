@@ -3436,7 +3436,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 892464110}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 6200000, guid: 4d56cdafcff54b8428a835e9ed81ef5c, type: 2}
@@ -4768,7 +4768,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: firstWaveDelay
