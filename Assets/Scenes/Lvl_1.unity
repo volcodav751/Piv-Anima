@@ -2674,9 +2674,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
+    x: 0.039166138
     y: 0
-    width: 1
+    width: 0.92201865
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -2794,13 +2794,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomCameraController
   player: {fileID: 1603913388}
+  bridgeBlocker: {fileID: 678974588}
+  bridgeArcCollider: {fileID: 2118930646}
   moveSpeed: 5
-  isAreaCleared: 0
-  bridgeBlocker: {fileID: 0}
-  bridgeArcCollider: {fileID: 0}
   lockedCameraX: 3.6
   minX: 3.6
   maxX: 5.5
+  isAreaCleared: 0
 --- !u!1001 &698001243
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4877,18 +4877,18 @@ PrefabInstance:
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 678974591}
+      objectReference: {fileID: 680348589}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Unlock
+      value: CompleteArea
       objectReference: {fileID: 0}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: PassageBlocker, Assembly-CSharp
+      value: RoomCameraController_lvl1, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 6758226908068589258, guid: 12dd273219af9c34fadcd06007868e89, type: 3}
       propertyPath: onAllWavesCompleted.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
